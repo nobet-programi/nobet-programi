@@ -313,7 +313,7 @@ async function loadDraftModule(kind){
   if(ids.length){const r=await client.from('user_profiles').select('id,first_name,last_name,is_active').in('id',ids);if(r.error)throw r.error;profiles=r.data||[]}
   const profileMap=new Map(profiles.map(x=>[x.id,x]));
   plannerPeople=(members||[]).filter(m=>profileMap.get(m.user_id)?.is_active===true).map(m=>{const p=profileMap.get(m.user_id);return{id:m.user_id,name:(p.first_name+' '+p.last_name).trim(),unit:m.role}});
-  const [lim,blk]=await Promise.all([client.from('personnel_limits').select('user_id,weekly_max,monthly_max').eq('institution_id',selectedInstitutionId),client.from('personnel_unavailability').select('user_id,blocked_date,shift_index').eq('institution_id',selectedInstitutionId).gte('blocked_date',monthKey()+'-01').lte('blocked_date',monthKey()+'-31')]);
+  const [lim,blk]=await Promise.all([client.from('personnel_limits').select('user_id,weekly_max,monthly_max').eq('institution_id',selectedInstitutionId),client.from('personnel_unavailability').select('user_id,blocked_date,shift_index').eq('institution_id',selectedInstitutionId).gte('blocked_date',monthKey()+'-01').lte('blocked_date',monthKey()+'-'+String(new Date(month.getFullYear(),month.getMonth()+1,0).getDate()).padStart(2,'0'))]);
   if(lim.error||blk.error)throw (lim.error||blk.error);
   plannerLimits=new Map((lim.data||[]).map(x=>[x.user_id,x]));
   plannerBlocks=new Set((blk.data||[]).map(x=>x.user_id+'|'+x.blocked_date+'|'+x.shift_index));
