@@ -736,16 +736,16 @@ $('deletedProgramsBtn').onclick=async()=>{
   const permanent=document.createElement('button');permanent.className='btn';permanent.textContent='🗑 Kalıcı Sil';
   permanent.style.borderColor='#b91c1c';permanent.style.color='#dc2626';
   permanent.onclick=async()=>{
-   if(!isAdmin||!client||selectedInstitutionId!==b.institution_id){
-    alert('Bu işlem için seçili kurumda Ana Yönetici yetkisi gerekir.');return;
+   if(!client){
+    alert('Güvenli bağlantı kurulamadı. Lütfen yeniden giriş yapın.');return;
    }
    const institutionLabel=b.institution_name||institutionName();
    const monthLabel=deletedProgramMonthLabel(b.month_key);
-   if(!confirm(`${institutionLabel} · ${monthLabel}\\n\\nBu yedek, içerdiği ${Number(b.assignment_count||0)} atama ve ${Number(b.version_count||0)} geçmiş sürümle birlikte KALICI OLARAK SİLİNECEK.\\nBu işlem GERİ ALINAMAZ. Devam edilsin mi?`))return;
-   const typedMonth=prompt(`SON ONAY (1/2)\\nSilinecek dönem: ${b.month_key}\\nDevam etmek için dönemi aynen yazın:`, '');
+   if(!confirm(`${institutionLabel} · ${monthLabel}\n\nBu yedek, içerdiği ${Number(b.assignment_count||0)} atama ve ${Number(b.version_count||0)} geçmiş sürümle birlikte KALICI OLARAK SİLİNECEK.\nBu işlem GERİ ALINAMAZ. Devam edilsin mi?`))return;
+   const typedMonth=prompt(`SON ONAY (1/2)\nSilinecek dönem: ${b.month_key}\nDevam etmek için dönemi aynen yazın:`, '');
    if(typedMonth===null)return;
    if(typedMonth.trim()!==b.month_key){alert('Dönem eşleşmedi. İşlem iptal edildi.');return}
-   const typedInstitution=prompt(`SON ONAY (2/2)\\nKurum: ${institutionLabel}\\nKalıcı silmeyi onaylamak için kurum adını aynen yazın:`, '');
+   const typedInstitution=prompt(`SON ONAY (2/2)\nKurum: ${institutionLabel}\nKalıcı silmeyi onaylamak için kurum adını aynen yazın:`, '');
    if(typedInstitution===null)return;
    if(typedInstitution.trim()!==institutionLabel.trim()){alert('Kurum adı eşleşmedi. İşlem iptal edildi.');return}
    permanent.disabled=true;restore.disabled=true;preview.disabled=true;
