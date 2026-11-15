@@ -82,6 +82,8 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
       <button class="btn" id="autoBtn">⚙ Otomatik Taslak Doldur</button>
       <button class="btn" id="shiftConfigBtn">🕒 Günlük Vardiya / Kişi Sayısı</button>
       <button class="btn" id="versionsBtn">🗂 Sürüm Geçmişi</button>
+       <button class="btn" id="deletedProgramsBtn">🗃 Silinen Programlar</button>
+       <button class="btn ghost" id="deletePublishedBtn" style="color:var(--bad)">🗑 Yayınlanan Programı Sil</button>
       <button class="btn" id="printProgram">📄 PDF Çıktıları</button>
       <button class="btn" id="exportDraft">⬇ Taslağı CSV İndir</button>
       <button class="btn ghost" id="resetDemo">↺ Geçici Taslağı Sıfırla</button>
@@ -550,7 +552,95 @@ $('versionsBtn').onclick=async()=>{
  const items=entries.map(v=>'<div class="panel" style="margin:8px 0"><strong>Surum '+Number(v.version_number)+'</strong><p class="sub">'+escapeHtml(new Date(v.published_at).toLocaleString('tr-TR'))+' · '+Object.keys(v.payload?.assignments||{}).length+' atama</p></div>').join('');
  modal('Yayin Surum Gecmisi · '+ym,items||'<p class="sub">Henuz arsivlenmis surum yok. Ilk yeniden yayinda onceki yayin arsivlenecek.</p>');
 };
-$('republishBtn').onclick=()=>alert('Yeniden yayinlama, sunucu tarafinda izin, cakisma ve calisma siniri kontrolleri tamamlaninca acilacak.');
+// Yeniden yayınlama butonu mevcut arayüzde bulunmadığından geçersiz olay bağlaması kaldırıldı.
+// Sunucu doğrulamaları tamamlanana kadar yeniden yayınlama kapalı kalır.
+
+// Silinen programlar: yalnız sunucu RPC'leri; yedek tablosuna doğrudan istemci erişimi yok.
+function closePlannerTools(){
+ $('moreActionsPanel').classList.add('hidden');
+ $('moreActionsBtn').setAttribute('aria-expanded','false');
+}
+function deletedProgramMonthLabel(ym){
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(ym||'')))return String(ym||'');
+ return new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(new Date(Number(ym.slice(0,4)),Number(ym.slice(5,7))-1,1));
+}
+function resetPlannerAfterServerChange(institution,ym){
+ if(selectedInstitutionId!==institution||monthKey()!==ym)return;
+ remoteLoadSequence++;
+ remoteProgram={status:'published'};
+ remoteLoadPending=true;
+ draft={};shiftConfigs={};
+ localStorage.removeItem(localDraftKey());
+ localStorage.removeItem(shiftConfigKey());
+ renderCalendar();updateProgramControls();
+}
+$('deletePublishedBtn').onclick=async()=>{
+ closePlannerTools();
+ if(!isAdmin||!client||!selectedInstitutionId){alert('Bu işlem için Ana Yönetici yetkisi ve seçili kurum gerekli.');return}
+ if(remoteLoadPending){alert('Program durumu yükleniyor.');return}
+ const institution=selectedInstitutionId,ym=monthKey(),name=institutionName();
+ // Ekrandaki taslak durumu yayın olmadığını göstermez; sunucudan son kez kontrol et.
+ const check=await client.from('duty_programs').select('status,payload').eq('institution_id',institution).eq('month_key',ym).maybeSingle();
+ if(check.error){alert('Yayın durumu doğrulanamadı: '+programErrorText(check.error));return}
+ if(check.data?.status!=='published'){alert('Seçilen kurum ve ayda silinecek yayınlanmış program yok.');await loadRemoteProgram();return}
+ const count=Object.keys(check.data.payload?.assignments||{}).length;
+ if(!confirm(`${name} · ${deletedProgramMonthLabel(ym)}\n${count} nöbet ataması içeren YAYINLANMIŞ program silinecek.\nÖnce veritabanına yedek alınacak. Devam edilsin mi?`))return;
+ const typed=prompt(`SON ONAY: Silmek için ${ym} yazın.\nBu işlem yayınlanan programı ve ilişkili düzenleme/sürüm kayıtlarını kaldırır.`, '');
+ if(typed!==ym){if(typed!==null)alert('Ay bilgisi eşleşmedi; silme iptal edildi.');return}
+ const btn=$('deletePublishedBtn');btn.disabled=true;
+ try{
+  const {data,error}=await client.rpc('delete_published_duty_program',{p_institution:institution,p_month:ym});
+  if(error)throw error;
+  if(!data)throw Error('Yedek kimliği alınamadı; işlem durumu kontrol edilmeli.');
+  if(institution===selectedInstitutionId&&ym===monthKey()){
+   resetPlannerAfterServerChange(institution,ym);
+   await loadRemoteProgram();
+  }
+  alert('Yayınlanan program yedeklenerek silindi. Artık aynı ay için yeni bir program hazırlayabilirsiniz. Yedek kimliği: '+data);
+ }catch(e){console.error('Yayın silme hatası',e);alert('Silme tamamlanamadı: '+programErrorText(e));if(institution===selectedInstitutionId&&ym===monthKey())await loadRemoteProgram()}
+ finally{updateProgramControls()}
+};
+$('deletedProgramsBtn').onclick=async()=>{
+ closePlannerTools();
+ if(!isAdmin||!client||!selectedInstitutionId){alert('Silinen programları görüntülemek için Ana Yönetici yetkisi ve kurum seçimi gerekir.');return}
+ const institution=selectedInstitutionId;
+ modal('Silinen Programlar',`<p class="sub">${escapeHtml(institutionName())} · Yedekler sunucuda korunur. Geri yükleme, aynı kurum ve ayda yeni program varsa engellenir.</p><div id="deletedProgramsMessage" class="statusline">Yedekler yükleniyor…</div><div id="deletedProgramsList" style="display:grid;gap:10px;max-height:55vh;overflow:auto"></div>`);
+ const root=$('deletedProgramsList'),msg=$('deletedProgramsMessage');
+ const {data,error}=await client.rpc('list_deleted_duty_programs');
+ if(!root||!root.isConnected)return;
+ if(error){console.error('Silinen programları listeleme',error);msg.textContent='Yedekler okunamadı: '+programErrorText(error);return}
+ const rows=(data||[]).filter(x=>x.institution_id===institution);
+ msg.textContent=rows.length+' silinen program yedeği bulundu.';
+ if(!rows.length){root.textContent='Bu kurumda henüz silinen program bulunmuyor.';return}
+ for(const b of rows){
+  const card=document.createElement('div');card.className='notice';
+  const title=document.createElement('strong');title.textContent=deletedProgramMonthLabel(b.month_key)+' · '+(b.institution_name||institutionName());
+  const details=document.createElement('p');details.className='sub';details.textContent=`${Number(b.assignment_count||0)} atama · ${Number(b.version_count||0)} geçmiş sürüm · Silinme: ${new Date(b.deleted_at).toLocaleString('tr-TR')}`;
+  const buttons=document.createElement('div');buttons.className='flex';
+  const preview=document.createElement('button');preview.className='btn';preview.textContent='Özeti Gör';
+  preview.onclick=()=>alert(`${b.institution_name||institutionName()}\n${deletedProgramMonthLabel(b.month_key)}\n${Number(b.assignment_count||0)} nöbet ataması\n${Number(b.version_count||0)} geçmiş sürüm\nSilinme: ${new Date(b.deleted_at).toLocaleString('tr-TR')}\n\nAyrıntılı kişi/vardiya önizlemesi için ek güvenli okuma fonksiyonu gereklidir.`);
+  const restore=document.createElement('button');restore.className='btn primary';restore.textContent='↶ Geri Yükle';
+  restore.onclick=async()=>{
+   if(!isAdmin){alert('Yönetici yetkisi gerekli.');return}
+   const check=await client.from('duty_programs').select('id,status').eq('institution_id',b.institution_id).eq('month_key',b.month_key).maybeSingle();
+   if(check.error){alert('Mevcut program kontrol edilemedi: '+programErrorText(check.error));return}
+   if(check.data){alert('Bu kurum ve ayda zaten program var. Geri yükleme mevcut programın üzerine yazamaz.');return}
+   if(!confirm(`${b.institution_name||institutionName()} · ${deletedProgramMonthLabel(b.month_key)} yedeği geri yüklensin mi?\n${Number(b.assignment_count||0)} atama ve sürüm geçmişi geri getirilecek.`))return;
+   restore.disabled=true;
+   try{
+    const result=await client.rpc('restore_deleted_duty_program',{p_backup_id:b.backup_id});
+    if(result.error)throw result.error;
+    if(b.institution_id===selectedInstitutionId&&b.month_key===monthKey()){
+     resetPlannerAfterServerChange(b.institution_id,b.month_key);
+     await loadRemoteProgram();
+    }
+    closeModal();alert('Program yedekten geri yüklendi. Yedek arşivde saklanmaya devam ediyor.');
+   }catch(e){console.error('Program geri yükleme',e);alert('Geri yükleme tamamlanamadı: '+programErrorText(e))}
+   finally{restore.disabled=false}
+  };
+  buttons.append(preview,restore);card.append(title,details,buttons);root.append(card);
+ }
+};
 
 // PDF çıktı seçenekleri: tarayıcının yazdır / PDF olarak kaydet özelliği.
 function pdfDate(date){const d=new Date(date+'T12:00:00');return new Intl.DateTimeFormat('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d)}
