@@ -99,6 +99,12 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
 <label>Bitiş <input type="date" id="fairnessTo" disabled></label>
 <button class="btn" id="fairnessRefresh" type="button">Raporu Hesapla</button></div>
 <div id="fairnessContext" class="statusline"></div><div id="fairnessList" style="overflow-x:auto"></div></div>
+<div id="fairnessPersonOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="fairnessPersonTitle" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:14px">
+ <div style="background:#10243e;color:#f5f8ff;border:1px solid #587087;border-radius:16px;width:min(920px,100%);max-height:90vh;overflow:auto;padding:22px;box-shadow:0 18px 60px #0008">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 id="fairnessPersonTitle" style="margin:0">Personel Analizi</h2><button type="button" class="btn" id="fairnessPersonClose">Kapat ✕</button></div>
+  <p class="sub" id="fairnessPersonPeriod"></p><div id="fairnessPersonContent"></div>
+ </div>
+</div>
 </section>
 <div class="foot">NÖBET PROGRAMI · Güvenli erişim · Koyu / Açık tema</div>
 </main>
@@ -521,6 +527,33 @@ $('fairnessPeriod').onchange=()=>{
  }
 };
 $('fairnessRefresh').onclick=()=>loadPublishedFairness();
+// TEST 45: Sadece mevcut rapor satırlarını okuyan personel ayrıntı penceresi.
+const fairnessPersonOverlay=$('fairnessPersonOverlay');
+function closeFairnessPerson(){fairnessPersonOverlay.classList.add('hidden');fairnessPersonOverlay.style.display='none'}
+$('fairnessPersonClose').onclick=closeFairnessPerson;
+fairnessPersonOverlay.onclick=e=>{if(e.target===fairnessPersonOverlay)closeFairnessPerson()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!fairnessPersonOverlay.classList.contains('hidden'))closeFairnessPerson()});
+closeFairnessPerson();
+function openFairnessPerson(person){
+ const rows=publishedFairnessRows.filter(r=>r.id===person.id).slice().sort((a,b)=>a.date.localeCompare(b.date));
+ const root=$('fairnessPersonContent');root.replaceChildren();
+ $('fairnessPersonTitle').textContent=person.name+' · Ayrıntılı Nöbet Analizi';
+ $('fairnessPersonPeriod').textContent=$('fairnessContext').textContent;
+ const format=n=>Number(n.toFixed(2)).toLocaleString('tr-TR');
+ const section=title=>{const el=document.createElement('section');el.style.cssText='margin:16px 0;padding:15px;border:1px solid #587087;border-radius:12px';const h=document.createElement('strong');h.textContent=title;h.style.cssText='display:block;margin-bottom:12px;font-size:16px';el.append(h);root.append(el);return el};
+ const statBox=section('Nöbet ve saat özeti');statBox.style.display='block';
+ const stats=document.createElement('div');stats.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px';
+ const metrics=[['Toplam nöbet',person.count],['Toplam saat',format(person.hours)],['Gündüz saati (06–22)',format(person.hours-person.nightHours)],['Gece saati (22–06)',format(person.nightHours)],['Gece nöbeti',person.night],['Cumartesi',person.saturday],['Pazar',person.sunday]];
+ for(const [label,value] of metrics){const card=document.createElement('div');card.style.cssText='padding:12px;background:rgba(120,150,190,.12);border-radius:10px';const caption=document.createElement('small');caption.textContent=label;caption.style.cssText='display:block;color:#bed1e7';const number=document.createElement('b');number.textContent=String(value);number.style.cssText='font-size:23px;display:block;margin-top:5px';card.append(caption,number);stats.append(card)}statBox.append(stats);
+ const days=section('Haftanın günlerine göre nöbetler');const names=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+ const daysGrid=document.createElement('div');daysGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px';names.forEach((name,i)=>{const item=document.createElement('div');item.style.cssText='padding:10px;border-radius:8px;background:rgba(120,150,190,.12)';item.textContent=name+': '+person.days[i];daysGrid.append(item)});days.append(daysGrid);
+ const monthly=section('Aylık nöbet geçmişi');const months=new Map();for(const r of rows){const key=r.date.slice(0,7),v=months.get(key)||{count:0,hours:0,night:0};v.count++;v.hours+=r.hours;v.night+=nightHoursForShift(r);months.set(key,v)}
+ const monthTable=document.createElement('table');monthTable.style.cssText='width:100%;border-collapse:collapse';const monthHead=document.createElement('tr');for(const label of ['Ay','Nöbet','Toplam saat','Gece saati']){const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:8px;border-bottom:1px solid #587087';monthHead.append(th)}monthTable.append(monthHead);for(const [key,v] of [...months].sort((a,b)=>a[0].localeCompare(b[0]))){const tr=document.createElement('tr');for(const val of [key,v.count,format(v.hours),format(v.night)]){const td=document.createElement('td');td.textContent=String(val);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}monthTable.append(tr)}monthly.append(monthTable);
+ const detail=section('Tarih ve vardiya ayrıntıları');const wrap=document.createElement('div');wrap.style.overflowX='auto';const tbl=document.createElement('table');tbl.style.cssText='width:100%;min-width:540px;border-collapse:collapse';const header=document.createElement('tr');for(const label of ['Tarih','Gün','Vardiya','Toplam saat','Gece saati']){const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:8px;border-bottom:1px solid #587087';header.append(th)}tbl.append(header);for(const r of rows){const date=new Date(r.date+'T12:00:00'),index=(date.getDay()+6)%7;const tr=document.createElement('tr');for(const value of [r.date,names[index],(r.shift?.start||'—')+' – '+(r.shift?.end||'—'),format(r.hours),format(nightHoursForShift(r))]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}tbl.append(tr)}wrap.append(tbl);detail.append(wrap);
+ const note=document.createElement('p');note.className='sub';note.textContent='Bu analiz yalnızca seçilen dönemin yayınlanmış nöbetlerini içerir. Resmî tatil ve bayram sınıflandırması henüz dahil değildir.';root.append(note);
+ fairnessPersonOverlay.classList.remove('hidden');fairnessPersonOverlay.style.display='flex';$('fairnessPersonClose').focus();
+}
+
 function renderPublishedFairness(){
  const root=$('fairnessList');root.replaceChildren();const data=fairnessData();
  if(!publishedFairnessRows.length){root.textContent='Yayınlanmış programda nöbet ataması bulunamadı.';return}
@@ -546,7 +579,7 @@ function renderPublishedFairness(){
  const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;min-width:1050px';
  const labels=['Personel','Toplam nöbet','Toplam saat','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
  const head=document.createElement('tr');labels.forEach(label=>{const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:10px;border-bottom:1px solid #74879a';head.append(th)});tbl.append(head);
- for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});tbl.append(tr)}root.append(tbl);
+ for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});if(x.count>0){const nameCell=tr.firstElementChild;nameCell.style.cssText+=';cursor:pointer;color:#93c5fd;text-decoration:underline;text-underline-offset:3px';nameCell.title='Ayrıntılı analizi aç';nameCell.tabIndex=0;nameCell.setAttribute('role','button');nameCell.onclick=()=>openFairnessPerson(x);nameCell.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFairnessPerson(x)}}}tbl.append(tr)}root.append(tbl);
  const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Resmî tatil sınıflandırması bu aşamada dahil değildir.';root.append(note);
 }
 $('fairnessCsv').onclick=()=>{
