@@ -691,7 +691,29 @@ $('deletedProgramsBtn').onclick=async()=>{
   const details=document.createElement('p');details.className='sub';details.textContent=`${Number(b.assignment_count||0)} atama · ${Number(b.version_count||0)} geçmiş sürüm · Silinme: ${new Date(b.deleted_at).toLocaleString('tr-TR')}`;
   const buttons=document.createElement('div');buttons.className='flex';
   const preview=document.createElement('button');preview.className='btn';preview.textContent='Özeti Gör';
-  preview.onclick=()=>alert(`${b.institution_name||institutionName()}\n${deletedProgramMonthLabel(b.month_key)}\n${Number(b.assignment_count||0)} nöbet ataması\n${Number(b.version_count||0)} geçmiş sürüm\nSilinme: ${new Date(b.deleted_at).toLocaleString('tr-TR')}\n\nAyrıntılı kişi/vardiya önizlemesi için ek güvenli okuma fonksiyonu gereklidir.`);
+  preview.textContent='Atamaları Gör';
+  preview.onclick=async()=>{
+   preview.disabled=true;
+   try{
+    const {data:backup,error:backupError}=await client.rpc('preview_deleted_duty_program',{p_backup_id:b.backup_id});
+    if(backupError)throw backupError;
+    const payload=backup?.payload;
+    if(!payload||typeof payload!=='object')throw Error('Yedek içeriği bulunamadı.');
+    const entries=Object.entries(payload.assignments||{}).sort(([a],[b])=>a.localeCompare(b));
+    const shifts=payload.shifts||{};
+    const tableRows=entries.map(([key,userId])=>{
+     const [date,slotRaw,seatRaw]=key.split('|');
+     const slot=Number(slotRaw),seat=Number(seatRaw);
+     const configured=Array.isArray(shifts[date])?shifts[date]:[{start:'08:00',end:'16:00',count:1},{start:'16:00',end:'00:00',count:1}];
+     const sh=configured[slot];
+     const name=plannerPeople.find(x=>x.id===userId)?.name||String(userId);
+     return `<tr><td>${escapeHtml(date)}</td><td>${escapeHtml(sh?sh.start+'–'+sh.end:'Vardiya '+(slot+1))}</td><td>${Number.isFinite(seat)?seat+1:'—'}</td><td>${escapeHtml(name)}</td></tr>`;
+    }).join('');
+    modal('Silinen Program · '+deletedProgramMonthLabel(b.month_key),`<p class="sub">${escapeHtml(b.institution_name||institutionName())} · ${entries.length} kayıt · Salt okunur yedek önizlemesi. Bu işlem geri yükleme yapmaz.</p><div style="overflow:auto;max-height:55vh"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Tarih</th><th>Vardiya</th><th>Kontenjan</th><th>Personel</th></tr></thead><tbody>${tableRows||'<tr><td colspan="4">Yedekte atama yok.</td></tr>'}</tbody></table></div><button class="btn" id="deletedBackBtn">← Yedek listesine dön</button>`);
+    $('deletedBackBtn').onclick=()=>$('deletedProgramsBtn').click();
+   }catch(e){console.error('Yedek önizleme',e);alert('Yedek önizlemesi açılamadı: '+programErrorText(e)+'\nÖnce ek güvenli SQL fonksiyonunun kurulması gerekir.')}
+   finally{preview.disabled=false}
+  };
   const restore=document.createElement('button');restore.className='btn primary';restore.textContent='↶ Geri Yükle';
   restore.onclick=async()=>{
    if(!isAdmin){alert('Yönetici yetkisi gerekli.');return}
@@ -774,7 +796,7 @@ $('printProgram').onclick=async()=>{
  }catch(e){alert('Yayınlanan program kontrol edilemedi: '+programErrorText(e));return}
  finally{pdfButton.disabled=false}
  const hasPublished=publishedExists;
- const hasDraft=remoteProgram?.status==='editing'||remoteProgram?.status==='draft'||Object.keys(draft||{}).length>0;
+ const hasDraft=remoteProgram?.status==='editing'||(!hasPublished&&Object.keys(draft||{}).length>0);
  if(!hasPublished&&!hasDraft){alert('PDF çıktısı için önce program hazırlayın.');return}
  const publishedButtons=hasPublished?`<button class="btn primary" id="pdfPublishedMonthly">✓ Resmî Nöbet Programı PDF · Tüm Personel</button>`:'';
  const draftButtons=hasDraft?`<button class="btn" id="pdfDraftMonthly">✎ Düzenleme Taslağı PDF · Tüm Personel</button>`:'';
