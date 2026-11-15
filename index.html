@@ -321,7 +321,7 @@ async function loadPlannerPeople(){
   plannerBlocks=new Set((blocksRes.data||[]).map(x=>x.user_id+'|'+x.blocked_date+'|'+x.shift_index));
    plannerLeaveBlocks=new Set();for(const leave of leavesRes.data||[]){for(let d=new Date(leave.start_date+'T12:00:00');d<=new Date(leave.end_date+'T12:00:00');d.setDate(d.getDate()+1)){const key=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');plannerLeaveBlocks.add(leave.user_id+'|'+key)}}
   msg.textContent=plannerPeople.length+' aktif kişi listelendi. Atamalar bu tarayıcıda geçici olarak saklanır.'+(limitsRes.error||blocksRes.error||leavesRes.error?' Uyarı: bazı limit/izin verileri okunamadı.':'');
-  loadLocalDraft();
+  // Sunucudan yüklenen programı personel sorgusu tamamlanınca ezme.
   renderPeople();renderCalendar();
  }catch(err){if(seq!==plannerLoadSequence)return;msg.textContent='Personeller yüklenemedi. Lütfen tekrar deneyin.';renderPeople();renderCalendar()}
 }
@@ -423,6 +423,19 @@ function renderDraftFairness(){const root=$('fairnessList');root.replaceChildren
 $('fairnessCsv').onclick=()=>{const rows=[['Personel','Toplam Nöbet','Toplam Saat','Gece (Yaklaşık)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours,x.night,...x.days])];const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='taslak-adalet-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)};
 
 
+// Diğer İşlemler açılır menüsü.
+$('moreActionsBtn').onclick=()=>{
+ const panel=$('moreActionsPanel');
+ const opened=panel.classList.contains('hidden');
+ panel.classList.toggle('hidden',!opened);
+ $('moreActionsBtn').setAttribute('aria-expanded',String(opened));
+};
+document.addEventListener('click',event=>{
+ if(!event.target.closest('.planner-tools')){
+  $('moreActionsPanel').classList.add('hidden');
+  $('moreActionsBtn').setAttribute('aria-expanded','false');
+ }
+});
 // Kalıcı program: veri tabanında kurum + ay başına tek taslak / yayın.
 function programErrorText(error){
  const msg=String(error?.message||'Bilinmeyen sunucu hatası');
@@ -434,10 +447,13 @@ function updateProgramControls(){
  $('saveBtn').disabled=remoteLoadPending||!isAdmin||!selectedInstitutionId||published;
  $('beginEditBtn').disabled=remoteLoadPending||!isAdmin||!selectedInstitutionId||!published;
  $('publishBtn').disabled=remoteLoadPending||!isAdmin||!selectedInstitutionId||remoteProgram?.status!=='draft';
+ $('publishBtn').textContent=editing?'↗ Yeniden Yayınla (Kontrol Bekliyor)':'↗ Yayınla';
+ $('beginEditBtn').textContent=editing?'✎ Düzenleme Açık':'✎ Düzenle';
  $('versionsBtn').disabled=!isAdmin||!selectedInstitutionId;
  $('autoBtn').disabled=remoteLoadPending||published;
  $('resetDemo').disabled=remoteLoadPending||published;
  $('shiftConfigBtn').disabled=remoteLoadPending||published;
+ $('programStatus').textContent=remoteLoadPending?'Sunucu kontrol ediliyor…':editing?'DÜZENLEME TASLAĞI':published?'YAYINLANDI':remoteProgram?.status==='draft'?'Veritabanında taslak':'Yerel taslak';
 }
 // Sunucudaki yayın ve düzenleme taslağı iki ayrı kayıttır; yayın asla taslak olarak kaydedilmez.
 async function loadRemoteProgram(){
