@@ -733,7 +733,35 @@ $('deletedProgramsBtn').onclick=async()=>{
    }catch(e){console.error('Program geri yükleme',e);alert('Geri yükleme tamamlanamadı: '+programErrorText(e))}
    finally{restore.disabled=false}
   };
-  buttons.append(preview,restore);card.append(title,details,buttons);root.append(card);
+  const permanent=document.createElement('button');permanent.className='btn';permanent.textContent='🗑 Kalıcı Sil';
+  permanent.style.borderColor='#b91c1c';permanent.style.color='#dc2626';
+  permanent.onclick=async()=>{
+   if(!isAdmin||!client||selectedInstitutionId!==b.institution_id){
+    alert('Bu işlem için seçili kurumda Ana Yönetici yetkisi gerekir.');return;
+   }
+   const institutionLabel=b.institution_name||institutionName();
+   const monthLabel=deletedProgramMonthLabel(b.month_key);
+   if(!confirm(`${institutionLabel} · ${monthLabel}\\n\\nBu yedek, içerdiği ${Number(b.assignment_count||0)} atama ve ${Number(b.version_count||0)} geçmiş sürümle birlikte KALICI OLARAK SİLİNECEK.\\nBu işlem GERİ ALINAMAZ. Devam edilsin mi?`))return;
+   const typedMonth=prompt(`SON ONAY (1/2)\\nSilinecek dönem: ${b.month_key}\\nDevam etmek için dönemi aynen yazın:`, '');
+   if(typedMonth===null)return;
+   if(typedMonth.trim()!==b.month_key){alert('Dönem eşleşmedi. İşlem iptal edildi.');return}
+   const typedInstitution=prompt(`SON ONAY (2/2)\\nKurum: ${institutionLabel}\\nKalıcı silmeyi onaylamak için kurum adını aynen yazın:`, '');
+   if(typedInstitution===null)return;
+   if(typedInstitution.trim()!==institutionLabel.trim()){alert('Kurum adı eşleşmedi. İşlem iptal edildi.');return}
+   permanent.disabled=true;restore.disabled=true;preview.disabled=true;
+   try{
+    const {error}=await client.rpc('permanently_delete_duty_program_backup',{p_backup_id:b.backup_id});
+    if(error)throw error;
+    alert('Seçilen silinmiş program yedeği kalıcı olarak silindi. Bu işlem geri alınamaz.');
+    if($('deletedProgramsList')?.isConnected)await $('deletedProgramsBtn').onclick();
+   }catch(e){
+    console.error('Yedek kalıcı silme',e);
+    alert('Kalıcı silme tamamlanamadı: '+programErrorText(e));
+   }finally{
+    permanent.disabled=false;restore.disabled=false;preview.disabled=false;
+   }
+  };
+  buttons.append(preview,restore,permanent);card.append(title,details,buttons);root.append(card);
  }
 };
 
