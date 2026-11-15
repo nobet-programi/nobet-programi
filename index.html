@@ -93,7 +93,12 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
 </div>
 <div class="planner"><aside class="panel"><h3 style="margin-top:0">Personel Havuzu</h3><p class="sub">Kartın tamamından sürükle. Tıklarsan detay açılır.</p><div class="people" id="peoplePool"></div><div id="plannerHours" class="statusline"></div><div id="plannerPeopleMsg" class="statusline" role="status"></div></aside><div class="panel calendar-scroll"><div class="weeknames"><span>Pazartesi</span><span>Salı</span><span>Çarşamba</span><span>Perşembe</span><span>Cuma</span><span>Cumartesi</span><span>Pazar</span></div><div id="calendar" class="cal"></div></div></div></div>
 <div id="swapPage" class="hidden panel"><h2>Nöbet Değiştir · Geçici Taslak</h2><p class="sub">Bu ekranda yalnızca bu tarayıcıdaki taslak atamaları değiştirilebilir. Yayımlanmış nöbetler üzerinde işlem yapılmaz.</p><div id="swapContext" class="statusline"></div><div id="swapList"></div></div>
-<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor seçili ayın veritabanındaki yayınlanmış nöbetlerini hesaplar. Önceki aylar ve resmî tatil sınıflandırması henüz dahil değildir.</p><div id="fairnessContext" class="statusline"></div><div id="fairnessList" style="overflow-x:auto"></div></div>
+<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçilen kurumun yayınlanmış programlarını hesaplar. Resmî tatil sınıflandırması henüz dahil değildir.</p><div class="flex" style="margin:12px 0;align-items:end;gap:10px;flex-wrap:wrap">
+<label>Dönem <select id="fairnessPeriod"><option value="month">Seçili ay</option><option value="3">Son 3 ay</option><option value="12">Son 12 ay</option><option value="all">Tüm yayınlanmış geçmiş</option><option value="custom">Özel tarih aralığı</option></select></label>
+<label>Başlangıç <input type="date" id="fairnessFrom" disabled></label>
+<label>Bitiş <input type="date" id="fairnessTo" disabled></label>
+<button class="btn" id="fairnessRefresh" type="button">Raporu Hesapla</button></div>
+<div id="fairnessContext" class="statusline"></div><div id="fairnessList" style="overflow-x:auto"></div></div>
 </section>
 <div class="foot">NÖBET PROGRAMI · Güvenli erişim · Koyu / Açık tema</div>
 </main>
@@ -474,27 +479,52 @@ function fairnessData(){
  }
  return [...byId.values()].sort((a,b)=>a.name.localeCompare(b.name,'tr'));
 }
+function fairnessRange(){
+ const period=$('fairnessPeriod').value, anchor=new Date(month.getFullYear(),month.getMonth(),1);
+ const endMonth=new Date(anchor.getFullYear(),anchor.getMonth()+1,0);
+ const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+ if(period==='all')return {from:null,to:null,label:'Tüm yayınlanmış geçmiş'};
+ if(period==='custom'){
+  const from=$('fairnessFrom').value,to=$('fairnessTo').value;
+  if(!from||!to||from>to)throw Error('Geçerli başlangıç ve bitiş tarihi seçin.');
+  return {from,to,label:from+' – '+to};
+ }
+ const count=period==='month'?1:Number(period);
+ const first=new Date(anchor.getFullYear(),anchor.getMonth()-count+1,1);
+ return {from:iso(first),to:iso(endMonth),label:iso(first)+' – '+iso(endMonth)};
+}
 async function loadPublishedFairness(){
- const seq=++fairnessLoadSeq,inst=selectedInstitutionId,ym=monthKey();
+ const seq=++fairnessLoadSeq,inst=selectedInstitutionId;
  const context=$('fairnessContext'),root=$('fairnessList');
  publishedFairnessRows=[];root.textContent='Yayınlanmış nöbetler yükleniyor…';
+ if(!inst){context.textContent='Önce bir kurum seçin.';root.textContent='';return}
  try{
-  const {data,error}=await client.from('duty_programs').select('status,payload').eq('institution_id',inst).eq('month_key',ym).maybeSingle();
-  if(seq!==fairnessLoadSeq||selectedInstitutionId!==inst||monthKey()!==ym||currentPage!=='fairness')return;
+  const range=fairnessRange();
+  let query=client.from('duty_programs').select('month_key,status,payload').eq('institution_id',inst).eq('status','published').order('month_key',{ascending:true});
+  if(range.from)query=query.gte('month_key',range.from.slice(0,7));
+  if(range.to)query=query.lte('month_key',range.to.slice(0,7));
+  const {data,error}=await query;
+  if(seq!==fairnessLoadSeq||selectedInstitutionId!==inst||currentPage!=='fairness')return;
   if(error)throw error;
-  if(data?.status!=='published'){
-   context.textContent='Kurum: '+institutionName()+' · Ay: '+ym+' · Yayınlanmış program bulunamadı';
-   root.textContent='Seçili ay için yayınlanmış program yok. Geçici taslak rapora dahil edilmedi.';return;
-  }
-  publishedFairnessRows=pdfRowsFromPayload(data.payload);
-  context.textContent='Kurum: '+institutionName()+' · Ay: '+ym+' · Yayınlanmış program · '+publishedFairnessRows.length+' atama';
+  if((data||[]).length>=1000)throw Error('Çok sayıda program bulundu; eksik sonuç oluşmaması için daha dar tarih aralığı seçin.');
+  publishedFairnessRows=(data||[]).flatMap(item=>pdfRowsFromPayload(item.payload)).filter(row=>(!range.from||row.date>=range.from)&&(!range.to||row.date<=range.to));
+  context.textContent='Kurum: '+institutionName()+' · Dönem: '+range.label+' · Yayınlanmış '+(data||[]).length+' program · '+publishedFairnessRows.length+' atama';
   renderPublishedFairness();
- }catch(e){root.textContent='Yayınlanmış program okunamadı: '+(e?.message||'Bilinmeyen hata')}
+ }catch(e){context.textContent='Rapor yüklenemedi';root.textContent='Yayınlanmış programlar okunamadı: '+(e?.message||'Bilinmeyen hata')}
 }
+$('fairnessPeriod').onchange=()=>{
+ const custom=$('fairnessPeriod').value==='custom';
+ $('fairnessFrom').disabled=!custom;$('fairnessTo').disabled=!custom;
+ if(custom&&!$('fairnessFrom').value){
+  $('fairnessFrom').value=monthKey()+'-01';
+  $('fairnessTo').value=monthKey()+'-'+String(new Date(month.getFullYear(),month.getMonth()+1,0).getDate()).padStart(2,'0');
+ }
+};
+$('fairnessRefresh').onclick=()=>loadPublishedFairness();
 function renderPublishedFairness(){
  const root=$('fairnessList');root.replaceChildren();const data=fairnessData();
  if(!publishedFairnessRows.length){root.textContent='Yayınlanmış programda nöbet ataması bulunamadı.';return}
- const active=data.filter(x=>x.count>0),max=Math.max(1,...active.map(x=>x.hours));
+ const active=data.filter(x=>x.count>0),max=Math.max(1,...active.map(x=>x.hours));\n const summary=document.createElement('p');summary.className='sub';summary.textContent='Toplam '+publishedFairnessRows.length+' nöbet · '+Number(active.reduce((sum,x)=>sum+x.hours,0).toFixed(2)).toLocaleString('tr-TR')+' saat · '+active.length+' görevli personel';root.append(summary);
  const graph=document.createElement('div');graph.style.cssText='margin:18px 0 22px;padding:16px;border:1px solid #587087;border-radius:12px';
  const heading=document.createElement('strong');heading.textContent='Personel bazında toplam nöbet saati';graph.append(heading);
  for(const x of active){const line=document.createElement('div');line.style.cssText='margin-top:12px';const label=document.createElement('div');label.textContent=x.name+' — '+Number(x.hours.toFixed(2)).toLocaleString('tr-TR')+' saat';label.style.marginBottom='5px';const track=document.createElement('div');track.style.cssText='height:12px;border-radius:8px;background:rgba(128,150,175,.25);overflow:hidden';const bar=document.createElement('div');bar.style.cssText='height:100%;width:'+Math.max(0,Math.min(100,x.hours/max*100))+'%;background:#36b5ac;border-radius:8px';track.append(bar);line.append(label,track);graph.append(line)}root.append(graph);
@@ -502,13 +532,13 @@ function renderPublishedFairness(){
  const labels=['Personel','Toplam nöbet','Toplam saat','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
  const head=document.createElement('tr');labels.forEach(label=>{const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:10px;border-bottom:1px solid #74879a';head.append(th)});tbl.append(head);
  for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});tbl.append(tr)}root.append(tbl);
- const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Resmî tatil ve önceki ayların geçmişi bu aşamada dahil değildir.';root.append(note);
+ const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Resmî tatil sınıflandırması bu aşamada dahil değildir.';root.append(note);
 }
 $('fairnessCsv').onclick=()=>{
  if(!publishedFairnessRows.length){alert('İndirilecek yayınlanmış nöbet verisi bulunamadı.');return}
  const rows=[['Personel','Toplam Nöbet','Toplam Saat','Gece Nöbeti','Gece Saati (22-06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours.toFixed(2),x.night,x.nightHours.toFixed(2),...x.days])];
  const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
- const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='yayinlanmis-adalet-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)
+ const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='yayinlanmis-adalet-'+$('fairnessPeriod').value+'-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)
 };
 
 // Diğer İşlemler açılır menüsü.
