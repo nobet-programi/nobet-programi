@@ -763,9 +763,18 @@ const rows=kind==='personal'?all.filter(r=>r.id===personId):all;
  const w=window.open('','_blank');if(!w){alert('Tarayıcı yeni pencereyi engelledi. Açılır pencerelere izin verin.');return}
  w.document.open();w.document.write(doc);w.document.close();w.focus();
 }
-$('printProgram').onclick=()=>{
- const hasPublished=remoteProgram?.status==='published'||remoteProgram?.status==='editing';
- const hasDraft=remoteProgram?.status==='editing'||remoteProgram?.status==='draft';
+$('printProgram').onclick=async()=>{
+ if(!client||!selectedInstitutionId){alert('Önce kurum seçip sunucu bağlantısını açın.');return}
+ const pdfButton=$('printProgram');pdfButton.disabled=true;
+ let publishedExists=false;
+ try{
+  const {data,error}=await client.from('duty_programs').select('status').eq('institution_id',selectedInstitutionId).eq('month_key',monthKey()).maybeSingle();
+  if(error)throw error;
+  publishedExists=data?.status==='published';
+ }catch(e){alert('Yayınlanan program kontrol edilemedi: '+programErrorText(e));return}
+ finally{pdfButton.disabled=false}
+ const hasPublished=publishedExists;
+ const hasDraft=remoteProgram?.status==='editing'||remoteProgram?.status==='draft'||Object.keys(draft||{}).length>0;
  if(!hasPublished&&!hasDraft){alert('PDF çıktısı için önce program hazırlayın.');return}
  const publishedButtons=hasPublished?`<button class="btn primary" id="pdfPublishedMonthly">✓ Resmî Nöbet Programı PDF · Tüm Personel</button>`:'';
  const draftButtons=hasDraft?`<button class="btn" id="pdfDraftMonthly">✎ Düzenleme Taslağı PDF · Tüm Personel</button>`:'';
