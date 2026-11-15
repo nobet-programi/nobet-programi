@@ -68,7 +68,7 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
 <main class="wrap">
 <section id="loginView" class="panel login"><div class="logo">♛</div><h1>Yönetici Girişi</h1><p class="sub">Güvenli giriş ile kurumunuzu ve nöbetlerinizi yönetin.</p><form id="loginForm"><div class="field"><label for="email">E-posta</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label for="password">Şifre</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn primary" style="width:100%" type="submit">Giriş Yap</button></form><div id="loginMsg" class="notice hidden"></div><div class="notice">İlk bağlantı için yönetici tarafından verilen uygulama bağlantı anahtarını girin. Gizli sunucu anahtarlarını bu alana girmeyin.</div><button class="btn ghost" id="configBtn" style="margin-top:12px">⚙ Bağlantı Ayarları</button></section>
 <section id="appView" class="hidden"><div class="hero"><div><h1 id="pageTitle">Yönetim Paneli</h1><div class="sub" id="userLabel">NÖBET PROGRAMI</div></div><div class="flex"><span class="tag" id="roleLabel">Yetki doğrulanıyor</span><button class="btn" id="homeBtn">⌂ Ana Sayfa</button></div></div>
-<div id="homePage"><div class="stats"><div class="stat"><small>Kurumlar</small><b id="homeInstitutionsCount">—</b><small>Kayıtlı kurum</small></div><div class="stat"><small>Personel</small><b id="homePersonnelCount">—</b><small>Seçili kurumun personeli</small></div><div class="stat"><small>Bu Ay Nöbet</small><b>—</b><small>Henüz yayınlanan program yok</small></div></div><div class="flex" style="margin-bottom:16px"><button class="btn" id="institutionsBtn">🏢 Kurumları Yönet</button><span class="tag" id="selectedInstitutionLabel">Kurum seçilmedi</span></div><div class="tiles"><button class="tile" data-page="people"><span class="emoji">👥</span><strong>Personeller</strong><small>Kullanıcı ekleme ve personel kartları</small></button><button class="tile" data-page="planner"><span class="emoji">🗓️</span><strong>Nöbet Hazırla</strong><small>Aylık / haftalık, sürükle-bırak taslağı</small></button><button class="tile" data-page="swap"><span class="emoji">🔁</span><strong>Nöbet Değiştir</strong><small>Taslak nöbetleri değiştir</small></button><button class="tile" data-page="fairness"><span class="emoji">📊</span><strong>Adalet Raporu</strong><small>Taslak saat ve nöbet dağılımı</small></button></div></div>
+<div id="homePage"><div class="stats"><div class="stat"><small>Kurumlar</small><b id="homeInstitutionsCount">—</b><small>Kayıtlı kurum</small></div><div class="stat"><small>Personel</small><b id="homePersonnelCount">—</b><small>Seçili kurumun personeli</small></div><div class="stat"><small>Bu Ay Nöbet</small><b id="homeDutyCount">—</b><small id="homeDutyCaption">Yayınlanan program kontrol ediliyor</small></div></div><div class="flex" style="margin-bottom:16px"><button class="btn" id="institutionsBtn">🏢 Kurumları Yönet</button><span class="tag" id="selectedInstitutionLabel">Kurum seçilmedi</span></div><div class="tiles"><button class="tile" data-page="people"><span class="emoji">👥</span><strong>Personeller</strong><small>Kullanıcı ekleme ve personel kartları</small></button><button class="tile" data-page="planner"><span class="emoji">🗓️</span><strong>Nöbet Hazırla</strong><small>Aylık / haftalık, sürükle-bırak taslağı</small></button><button class="tile" data-page="swap"><span class="emoji">🔁</span><strong>Nöbet Değiştir</strong><small>Taslak nöbetleri değiştir</small></button><button class="tile" data-page="fairness"><span class="emoji">📊</span><strong>Adalet Raporu</strong><small>Taslak saat ve nöbet dağılımı</small></button></div></div>
 <div id="institutionsPage" class="hidden"><div class="section-head"><h2>Kurum Yönetimi</h2><button class="btn primary" id="addInstitutionBtn">+ Kurum Ekle</button></div><div id="institutionMsg" class="statusline" role="status"></div><div id="institutionList" class="institution-list"></div></div>
  <div id="peoplePage" class="hidden"><div class="section-head"><h2>Personeller</h2><div class="flex"><button class="btn" id="manageUnitsBtn">🏢 Bölüm / Birimler</button><button class="btn primary" id="addUserBtn">+ Personel Ekle</button></div></div><div class="panel"><div id="personnelContext" class="sub"></div><div id="personnelMsg" class="statusline" role="status"></div><div id="realPersonnelList" class="institution-list"></div></div></div>
 <div id="plannerPage" class="hidden"><div class="section-head"><h2>Aylık / Haftalık Nöbet Taslağı</h2><div class="flex"><button class="btn" id="prevMonth">‹</button><strong id="monthLabel"></strong><button class="btn" id="nextMonth">›</button><button class="btn" id="viewToggle">Haftalık Görünüm</button><button class="btn hidden" id="prevWeek">← Önceki Hafta</button><button class="btn hidden" id="nextWeek">Sonraki Hafta →</button></div></div><p class="sub" style="margin:0 0 12px">Vardiyaları planlayın, kaydedin ve yayınlayın. Ek araçlar “Diğer İşlemler” menüsündedir.</p>
@@ -119,7 +119,32 @@ async function checkAdmin(){isAdmin=false;$('roleLabel').textContent='Yetki doğ
 $('loginForm').onsubmit=async e=>{e.preventDefault();if(!client){notify('loginMsg','Önce Bağlantı Ayarları bölümünden legacy anon key girin.','error');return}const btn=e.submitter;btn.disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;session=data.session;$('password').value='';showApp(data.user);await checkAdmin()}catch(err){notify('loginMsg','Giriş başarısız. E-posta ve şifrenizi kontrol edin.','error')}finally{btn.disabled=false}};
 $('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();showLogin()};$('homeBtn').onclick=()=>navigate('home');$('institutionsBtn').onclick=()=>navigate('institutions');document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
 function navigate(page){currentPage=page;['home','institutions','people','planner','swap','fairness'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';loadPersonnel()}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
-async function loadHomeStats(){if(!client||!session)return;const a=$('homeInstitutionsCount'),b=$('homePersonnelCount');try{const {count,error}=await client.from('institutions').select('id',{count:'exact',head:true});a.textContent=error?'—':String(count??0)}catch{a.textContent='—'}if(!selectedInstitutionId){b.textContent='—';return}try{const {count,error}=await client.from('institution_memberships').select('id',{count:'exact',head:true}).eq('institution_id',selectedInstitutionId).eq('is_active',true);b.textContent=error?'—':String(count??0)}catch{b.textContent='—'}}
+let homeStatsSequence=0;
+async function loadHomeStats(){
+ const seq=++homeStatsSequence;
+ const a=$('homeInstitutionsCount'),b=$('homePersonnelCount'),c=$('homeDutyCount'),note=$('homeDutyCaption');
+ a.textContent='—';b.textContent='—';c.textContent='—';note.textContent='Yayınlanan program kontrol ediliyor';
+ if(!client||!session)return;
+ const inst=selectedInstitutionId,ym=monthKey();
+ try{
+  const {count,error}=await client.from('institutions').select('id',{count:'exact',head:true});
+  if(seq===homeStatsSequence)a.textContent=error?'—':String(count??0);
+ }catch{if(seq===homeStatsSequence)a.textContent='—'}
+ if(!inst){if(seq===homeStatsSequence)note.textContent='Önce kurum seçin';return}
+ try{
+  const [people,program]=await Promise.all([
+   client.from('institution_memberships').select('id',{count:'exact',head:true}).eq('institution_id',inst).eq('is_active',true),
+   client.from('duty_programs').select('status,payload').eq('institution_id',inst).eq('month_key',ym).maybeSingle()
+  ]);
+  if(seq!==homeStatsSequence||inst!==selectedInstitutionId)return;
+  b.textContent=people.error?'—':String(people.count??0);
+  if(program.error){note.textContent='Program bilgisi okunamadı';return}
+  if(program.data?.status==='published'){
+   c.textContent=String(Object.keys(program.data.payload?.assignments||{}).length);
+   note.textContent='Seçili kurumun bu ay yayınlanan atamaları';
+  }else{c.textContent='0';note.textContent='Bu ay yayınlanan program yok'}
+ }catch{if(seq===homeStatsSequence)note.textContent='Program bilgisi okunamadı'}
+}
 async function loadInstitutions(){
  const list=$('institutionList'),msg=$('institutionMsg');list.replaceChildren();msg.textContent='Kurumlar yükleniyor…';
  if(!client||!session){msg.textContent='Önce giriş yapın.';return}
@@ -127,7 +152,7 @@ async function loadInstitutions(){
  if(error){msg.textContent='Kurumlar şu anda görüntülenemiyor. Lütfen daha sonra tekrar deneyin.';return}
  institutions=data||[];msg.textContent=institutionCountText(institutions.length);
  if(!institutions.length)return;
- for(const inst of institutions){const b=document.createElement('button');b.type='button';b.className='institution-card'+(selectedInstitutionId===inst.id?' selected':'');const title=document.createElement('strong');title.textContent=inst.name||'İsimsiz kurum';const kind=document.createElement('small');kind.textContent=inst.institution_type==='school'?'Okul':inst.institution_type==='shift_organization'?'Vardiyalı Kurum':inst.institution_type==='private_organization'?'Özel Kurum':inst.institution_type||'Kurum';const note=document.createElement('small');note.style.display='block';note.style.marginTop='10px';note.textContent=inst.is_active===false?'⏸ Pasif kurum':selectedInstitutionId===inst.id?'✓ Seçili kurum':'Seçmek için tıklayın';if(inst.logo_url&&/^https:\/\//i.test(inst.logo_url)){const logo=document.createElement('img');logo.className='institution-logo';logo.src=inst.logo_url;logo.alt=inst.name+' logosu';logo.onerror=()=>logo.remove();b.append(logo)}b.append(title,kind,note);const card=document.createElement('div');card.style.cssText='display:flex;flex-direction:column;gap:8px';card.append(b);if(isAdmin){const edit=document.createElement('button');edit.type='button';edit.className='btn ghost';edit.textContent='✎ Kurum Bilgilerini Düzenle';edit.onclick=()=>openEditInstitution(inst);card.append(edit)}b.onclick=()=>{if(inst.is_active===false){alert('Bu kurum pasif. Önce Kurum Bilgilerini Düzenle bölümünden aktifleştirin.');return}if(selectedInstitutionId!==inst.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=inst.id;$('selectedInstitutionLabel').textContent='Kurum: '+(inst.name||'İsimsiz');loadInstitutions()};list.append(card)}
+ for(const inst of institutions){const b=document.createElement('button');b.type='button';b.className='institution-card'+(selectedInstitutionId===inst.id?' selected':'');const title=document.createElement('strong');title.textContent=inst.name||'İsimsiz kurum';const kind=document.createElement('small');kind.textContent=inst.institution_type==='school'?'Okul':inst.institution_type==='shift_organization'?'Vardiyalı Kurum':inst.institution_type==='private_organization'?'Özel Kurum':inst.institution_type||'Kurum';const note=document.createElement('small');note.style.display='block';note.style.marginTop='10px';note.textContent=inst.is_active===false?'⏸ Pasif kurum':selectedInstitutionId===inst.id?'✓ Seçili kurum':'Seçmek için tıklayın';if(inst.logo_url&&/^https:\/\//i.test(inst.logo_url)){const logo=document.createElement('img');logo.className='institution-logo';logo.src=inst.logo_url;logo.alt=inst.name+' logosu';logo.onerror=()=>logo.remove();b.append(logo)}b.append(title,kind,note);const card=document.createElement('div');card.style.cssText='display:flex;flex-direction:column;gap:8px';card.append(b);if(isAdmin){const edit=document.createElement('button');edit.type='button';edit.className='btn ghost';edit.textContent='✎ Kurum Bilgilerini Düzenle';edit.onclick=()=>openEditInstitution(inst);card.append(edit)}b.onclick=()=>{if(inst.is_active===false){alert('Bu kurum pasif. Önce Kurum Bilgilerini Düzenle bölümünden aktifleştirin.');return}if(selectedInstitutionId!==inst.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=inst.id;$('selectedInstitutionLabel').textContent='Kurum: '+(inst.name||'İsimsiz');loadInstitutions();loadHomeStats()};list.append(card)}
 }
 function institutionCountText(n){return n+' kurum listelendi.'}
 function openEditInstitution(inst){
@@ -471,7 +496,21 @@ async function loadRemoteProgram(){
    const {data:editRows,error:editError}=await client.from('duty_program_edit_drafts').select('id,payload').eq('institution_id',wantedInstitution).eq('month_key',wantedMonth).limit(1);
    if(seq!==remoteLoadSequence||monthKey()!==wantedMonth||selectedInstitutionId!==wantedInstitution)return;
    if(editError)throw new Error('Düzenleme taslağı durumu okunamadı: '+programErrorText(editError));
-   if(editRows?.length)shown={...data,status:'editing',id:editRows[0].id,payload:editRows[0].payload};
+   if(editRows?.length){
+    const edit=editRows[0], publishedPayload=data.payload||{}, editPayload=edit.payload||{};
+    const publishedAssignments=publishedPayload.assignments||{};
+    const editAssignments=editPayload.assignments||{};
+    // Boş düzenleme taslağı, yayınlanmış atamaları gizlememeli.
+    // Gerçek atama içeren düzenleme taslaklarına hiçbir müdahale edilmez.
+    const emptyEdit=Object.keys(editAssignments).length===0;
+    const hasPublishedAssignments=Object.keys(publishedAssignments).length>0;
+    const effectivePayload=emptyEdit&&hasPublishedAssignments
+      ? {...editPayload,assignments:structuredClone(publishedAssignments),
+         shifts:Object.keys(editPayload.shifts||{}).length
+           ? editPayload.shifts : structuredClone(publishedPayload.shifts||{})}
+      : editPayload;
+    shown={...data,status:'editing',id:edit.id,payload:effectivePayload};
+   }
   }
   remoteProgram=shown||null;
   if(shown?.payload&&typeof shown.payload==='object'){
@@ -543,14 +582,32 @@ $('beginEditBtn').onclick=async()=>{
   updateProgramControls();alert('Düzenleme taslağı açıldı. Değişiklikleri Programı Kaydet ile saklayabilirsiniz.');
  }catch(e){console.error('Duzenleme baslatma hatasi',e);alert('Düzenleme başlatılamadı: '+programErrorText(e))}finally{btn.disabled=false}
 };
+// Salt-okunur program önizlemesi: kaydetme, yayınlama veya geri yükleme yapmaz.
+function showProgramPayloadPreview(title,payload,onBack){
+ const assignments=Object.entries(payload?.assignments||{}).sort(([a],[b])=>a.localeCompare(b));
+ const shifts=payload?.shifts||{};
+ const rows=assignments.map(([key,id])=>{
+  const [date,idx,seat]=key.split('|');
+  const sh=(shifts[date]||defaultShifts())[Number(idx)];
+  const person=plannerPeople.find(p=>p.id===id);
+  return '<tr><td>'+escapeHtml(date)+'</td><td>'+escapeHtml(sh?sh.start+'–'+sh.end:'Vardiya tanımı yok')+'</td><td>'+escapeHtml(String(Number(seat||0)+1))+'</td><td>'+escapeHtml(person?.name||id)+'</td></tr>';
+ }).join('');
+ modal(title,'<p class="sub">'+assignments.length+' kayıt · Salt okunur önizleme. Personel adları mevcut havuzda bulunamazsa kayıt kimliği gösterilir.</p><div style="overflow-x:auto;max-height:50vh"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Tarih</th><th>Vardiya</th><th>Kontenjan</th><th>Personel</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+(onBack?'<button type="button" class="btn" id="backToVersions" style="margin-top:12px">← Sürüm listesine dön</button>':''));
+ if(onBack)$('backToVersions').onclick=onBack;
+}
 $('versionsBtn').onclick=async()=>{
  if(!isAdmin||!selectedInstitutionId){alert('Surum gecmisi icin yonetici yetkisi gerekli.');return}
  const inst=selectedInstitutionId,ym=monthKey();
  const {data,error}=await client.from('duty_program_versions').select('version_number,published_at,published_by,payload').eq('institution_id',inst).eq('month_key',ym).order('version_number',{ascending:false});
  if(error){console.error('Surum gecmisi',error);alert('Sürüm geçmişi okunamadı: '+programErrorText(error));return}
  const entries=data||[];
- const items=entries.map(v=>'<div class="panel" style="margin:8px 0"><strong>Surum '+Number(v.version_number)+'</strong><p class="sub">'+escapeHtml(new Date(v.published_at).toLocaleString('tr-TR'))+' · '+Object.keys(v.payload?.assignments||{}).length+' atama</p></div>').join('');
- modal('Yayin Surum Gecmisi · '+ym,items||'<p class="sub">Henuz arsivlenmis surum yok. Ilk yeniden yayinda onceki yayin arsivlenecek.</p>');
+ const items=entries.map((v,i)=>'<div class="panel" style="margin:8px 0"><strong>Sürüm '+Number(v.version_number)+'</strong><p class="sub">'+escapeHtml(new Date(v.published_at).toLocaleString('tr-TR'))+' · '+Object.keys(v.payload?.assignments||{}).length+' atama</p><button type="button" class="btn" data-version-preview="'+i+'">Atamaları Gör</button></div>').join('');
+ modal('Yayın Sürüm Geçmişi · '+ym,items||'<p class="sub">Henüz arşivlenmiş sürüm yok. İlk yeniden yayında önceki yayın arşivlenecek.</p>');
+ document.querySelectorAll('[data-version-preview]').forEach(btn=>btn.onclick=()=>{
+  const version=entries[Number(btn.dataset.versionPreview)];
+  if(!version)return;
+  showProgramPayloadPreview('Sürüm '+version.version_number+' · '+ym,version.payload,()=> $('versionsBtn').click());
+ });
 };
 // Yeniden yayınlama butonu mevcut arayüzde bulunmadığından geçersiz olay bağlaması kaldırıldı.
 // Sunucu doğrulamaları tamamlanana kadar yeniden yayınlama kapalı kalır.
