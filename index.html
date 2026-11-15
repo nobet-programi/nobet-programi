@@ -718,14 +718,37 @@ $('deletedProgramsBtn').onclick=async()=>{
 // PDF çıktı seçenekleri: tarayıcının yazdır / PDF olarak kaydet özelliği.
 function pdfDate(date){const d=new Date(date+'T12:00:00');return new Intl.DateTimeFormat('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d)}
 function pdfDay(date){return new Intl.DateTimeFormat('tr-TR',{weekday:'long'}).format(new Date(date+'T12:00:00'))}
-function pdfPrint(kind,personId=''){
- const all=draftRows();const rows=kind==='personal'?all.filter(r=>r.id===personId):all;
+function pdfRowsFromPayload(payload){
+ const assignments=payload?.assignments||{},shifts=payload?.shifts||{};
+ return Object.entries(assignments).map(([key,id])=>{
+  const [date,index,seat]=key.split('|');
+  const shift=(shifts[date]||defaultShifts())[Number(index)];
+  if(!shift)return null;
+  const [h1,m1]=(shift.start||'').split(':').map(Number);
+  const [h2,m2]=(shift.end||'').split(':').map(Number);
+  if([h1,m1,h2,m2].some(x=>!Number.isFinite(x)))return null;
+  let minutes=(h2*60+m2)-(h1*60+m1);
+  if(minutes<=0)minutes+=1440;
+  return {key,date,index:Number(index),seat:Number(seat||0),id,shift,hours:minutes/60};
+ }).filter(Boolean).sort((a,b)=>a.key.localeCompare(b.key));
+}
+async function pdfPrint(kind,personId='',source='current'){
+ let all=draftRows();
+ if(source==='published'){
+  if(!client||!selectedInstitutionId){alert('Sunucu bağlantısı yok.');return}
+  const {data,error}=await client.from('duty_programs').select('status,payload')
+   .eq('institution_id',selectedInstitutionId).eq('month_key',monthKey()).maybeSingle();
+  if(error){alert('Yayınlanan program okunamadı: '+programErrorText(error));return}
+  if(data?.status!=='published'){alert('Bu ay için yayınlanmış program bulunamadı.');return}
+  all=pdfRowsFromPayload(data.payload);
+ }
+const rows=kind==='personal'?all.filter(r=>r.id===personId):all;
  if(!rows.length){alert(kind==='personal'?'Seçilen personelin bu ay nöbeti bulunmuyor.':'Bu ay yazdırılacak nöbet ataması bulunmuyor.');return}
  const inst=institutions.find(x=>x.id===selectedInstitutionId);
  const name=inst?.name||'Kurum';const person=plannerPeople.find(x=>x.id===personId);
  const monthTitle=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month);
- const published=remoteProgram?.status==='published';
- const title=kind==='personal'?'Kişiye Özel Nöbet Programı':'Aylık Nöbet Programı';
+ const published=source==='published'||(source==='current'&&remoteProgram?.status==='published');
+ const title=(kind==='personal'?'Kişiye Özel Nöbet Programı':'Aylık Nöbet Programı')+(published?' · Yayınlanan':' · Taslak');
  const totalHours=rows.reduce((a,r)=>a+r.hours,0);
  const distinctPeople=new Set(rows.map(r=>r.id)).size;
  const logo=inst?.logo_url&&/^https:\/\//i.test(inst.logo_url)?'<img class="logo" src="'+escapeHtml(inst.logo_url)+'" alt="Kurum logosu">':'';
@@ -742,10 +765,12 @@ function pdfPrint(kind,personId=''){
 }
 $('printProgram').onclick=()=>{
  if(!draftRows().length){alert('PDF çıktısı için önce nöbet ataması yapın.');return}
- modal('PDF Çıktıları',`<p class="sub">İstediğiniz çıktı türünü seçin. Açılan sayfada <b>Yazdır / PDF Olarak Kaydet</b> seçeneğini kullanabilirsiniz.</p><div style="display:grid;gap:12px"><button class="btn primary" id="pdfMonthly">▦ Aylık PDF · Tüm Personel</button><div class="panel" style="padding:15px"><label for="pdfPerson">Kişiye Özel PDF</label><select id="pdfPerson" style="width:100%;margin:10px 0"></select><button class="btn" id="pdfPersonal">♙ Seçilen Personelin PDF'si</button></div></div>`);
+ modal('PDF Çıktıları',`<p class="sub">Yayınlanan program ve düzenleme taslağı ayrı kaynaklardan hazırlanır. Açılan sayfada <b>Yazdır / PDF Olarak Kaydet</b> seçeneğini kullanabilirsiniz.</p><div style="display:grid;gap:12px"><button class="btn primary" id="pdfPublishedMonthly">✓ Yayınlanan Program PDF · Tüm Personel</button><button class="btn" id="pdfDraftMonthly">✎ Ekrandaki Program PDF · Tüm Personel</button><div class="panel" style="padding:15px"><label for="pdfPerson">Kişiye Özel PDF</label><select id="pdfPerson" style="width:100%;margin:10px 0"></select><div class="flex"><button class="btn" id="pdfPublishedPersonal">✓ Yayınlanan · Seçili Personel</button><button class="btn" id="pdfDraftPersonal">✎ Ekrandaki · Seçili Personel</button></div></div></div>`);
  const select=$('pdfPerson');for(const p of plannerPeople){const opt=document.createElement('option');opt.value=p.id;opt.textContent=p.name;select.append(opt)}
- $('pdfMonthly').onclick=()=>pdfPrint('monthly');
- $('pdfPersonal').onclick=()=>{if(!select.value){alert('Personel seçin.');return}pdfPrint('personal',select.value)};
+ $('pdfPublishedMonthly').onclick=()=>pdfPrint('monthly','','published');
+ $('pdfDraftMonthly').onclick=()=>pdfPrint('monthly','','current');
+ $('pdfPublishedPersonal').onclick=()=>{if(!select.value){alert('Personel seçin.');return}pdfPrint('personal',select.value,'published')};
+ $('pdfDraftPersonal').onclick=()=>{if(!select.value){alert('Personel seçin.');return}pdfPrint('personal',select.value,'current')};
 };
 
 // Kalıcı program işlemleri Supabase SQL kurulumuna bağlıdır.
