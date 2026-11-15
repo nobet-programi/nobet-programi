@@ -93,7 +93,7 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
 </div>
 <div class="planner"><aside class="panel"><h3 style="margin-top:0">Personel Havuzu</h3><p class="sub">Kartın tamamından sürükle. Tıklarsan detay açılır.</p><div class="people" id="peoplePool"></div><div id="plannerHours" class="statusline"></div><div id="plannerPeopleMsg" class="statusline" role="status"></div></aside><div class="panel calendar-scroll"><div class="weeknames"><span>Pazartesi</span><span>Salı</span><span>Çarşamba</span><span>Perşembe</span><span>Cuma</span><span>Cumartesi</span><span>Pazar</span></div><div id="calendar" class="cal"></div></div></div></div>
 <div id="swapPage" class="hidden panel"><h2>Nöbet Değiştir · Geçici Taslak</h2><p class="sub">Bu ekranda yalnızca bu tarayıcıdaki taslak atamaları değiştirilebilir. Yayımlanmış nöbetler üzerinde işlem yapılmaz.</p><div id="swapContext" class="statusline"></div><div id="swapList"></div></div>
-<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Geçici Taslak</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçili ayın bu tarayıcıda oluşturulmuş taslak atamalarını hesaplar. Geçmiş, yayınlanmış nöbetler ve resmî tatiller dahil değildir.</p><div id="fairnessContext" class="statusline"></div><div id="fairnessList" style="overflow-x:auto"></div></div>
+<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor seçili ayın veritabanındaki yayınlanmış nöbetlerini hesaplar. Önceki aylar ve resmî tatil sınıflandırması henüz dahil değildir.</p><div id="fairnessContext" class="statusline"></div><div id="fairnessList" style="overflow-x:auto"></div></div>
 </section>
 <div class="foot">NÖBET PROGRAMI · Güvenli erişim · Koyu / Açık tema</div>
 </main>
@@ -438,17 +438,78 @@ async function loadDraftModule(kind){
   plannerBlocks=new Set((blk.data||[]).map(x=>x.user_id+'|'+x.blocked_date+'|'+x.shift_index));plannerLeaveBlocks=new Set();for(const leave of leaves.data||[]){for(let d=new Date(leave.start_date+'T12:00:00');d<=new Date(leave.end_date+'T12:00:00');d.setDate(d.getDate()+1)){plannerLeaveBlocks.add(leave.user_id+'|'+[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'))}}
   loadLocalDraft();
   context.textContent='Kurum: '+institutionName()+' · Ay: '+new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month)+' · Yalnızca geçici taslak';
-  if(kind==='swap')renderDraftSwap();else renderDraftFairness();
+  if(kind==='swap')renderDraftSwap();else await loadPublishedFairness();
  }catch(e){context.textContent='Bilgiler şu anda yüklenemiyor.'}
 }
 function draftRows(){return Object.entries(draft).map(([key,id])=>{const [date,index,seat]=key.split('|');const shift=getShifts(date)[Number(index)];return shift?{key,date,index:Number(index),seat:Number(seat||0),id,shift,hours:shiftLength(Number(index),date)}:null}).filter(Boolean).sort((a,b)=>a.key.localeCompare(b.key))}
 function renderDraftSwap(){const root=$('swapList');root.replaceChildren();const rows=draftRows();if(!rows.length){root.textContent='Bu ay için taslak nöbet ataması yok. Önce Nöbet Hazırla ekranında atama yapın.';return}
  for(const row of rows){const card=document.createElement('div');card.className='panel';card.style.margin='10px 0';const person=plannerPeople.find(p=>p.id===row.id);const title=document.createElement('strong');title.textContent=row.date+' · '+row.shift.start+'–'+row.shift.end+' · '+(person?.name||'Kayıtlı olmayan personel');const sel=document.createElement('select');sel.style.margin='8px 0';for(const [id,name] of [['','Yeni personel seçin'],...plannerPeople.map(p=>[p.id,p.name])]){const o=document.createElement('option');o.value=id;o.textContent=name;sel.append(o)}const btn=document.createElement('button');btn.className='btn';btn.textContent='Taslak Atamasını Değiştir';btn.onclick=()=>{const id=sel.value;if(!id){alert('Yeni personeli seçin.');return}if(id===row.id){alert('Aynı personel seçildi.');return}const err=validateAssignment(id,row.key);if(err){alert('Değişiklik yapılamadı: '+err);return}if(!confirm('Bu taslak nöbeti seçilen personele aktaralım mı?'))return;draft[row.key]=id;persistDraft();renderDraftSwap()};card.append(title,sel,btn);root.append(card)}
 }
-function fairnessData(){const byId=new Map(plannerPeople.map(p=>[p.id,{name:p.name,count:0,hours:0,night:0,saturday:0,sunday:0,days:[0,0,0,0,0,0,0]}]));for(const row of draftRows()){const rec=byId.get(row.id);if(!rec)continue;rec.count++;rec.hours+=row.hours;const weekday=new Date(row.date+'T12:00:00').getDay();rec.days[(weekday+6)%7]++;if(weekday===6)rec.saturday++;if(weekday===0)rec.sunday++;const [sh]=row.shift.start.split(':').map(Number),[eh]=row.shift.end.split(':').map(Number);if(sh>=18||eh<=6||sh>eh)rec.night++}return [...byId.values()].sort((a,b)=>a.name.localeCompare(b.name,'tr'))}
-function renderDraftFairness(){const root=$('fairnessList');root.replaceChildren();const data=fairnessData();if(!data.length){root.textContent='Bu kurumda raporlanacak aktif personel bulunamadı.';return}const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;min-width:850px';const labels=['Personel','Toplam nöbet','Toplam saat','Gece*','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];const head=document.createElement('tr');labels.forEach(label=>{const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:10px;border-bottom:1px solid #74879a';head.append(th)});tbl.append(head);for(const x of data){const tr=document.createElement('tr');[x.name,x.count,x.hours.toLocaleString('tr-TR'),x.night,...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});tbl.append(tr)}root.append(tbl);const note=document.createElement('p');note.className='sub';note.textContent='* Gece sütunu geçici yaklaşık sınıflandırmadır; kesin gece saatleri ve resmî tatil hesabı henüz uygulanmadı.';root.append(note)}
-$('fairnessCsv').onclick=()=>{const rows=[['Personel','Toplam Nöbet','Toplam Saat','Gece (Yaklaşık)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours,x.night,...x.days])];const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='taslak-adalet-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)};
-
+// Adalet Raporu yalnızca yayınlanmış, salt okunur programı esas alır.
+let publishedFairnessRows=[];
+let fairnessLoadSeq=0;
+function nightHoursForShift(row){
+ const start=row.shift?.start||'',end=row.shift?.end||'';
+ const toMin=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t);return m?Number(m[1])*60+Number(m[2]):NaN};
+ const a=toMin(start),b=toMin(end);
+ if(!Number.isFinite(a)||!Number.isFinite(b))return 0;
+ const finish=b<=a?b+1440:b;
+ let total=0;
+ // Gece saatleri 22.00-06.00 aralığına göre hesaplanır.
+ for(let day=-1;day<=2;day++){
+  for(const [lo,hi] of [[day*1440,day*1440+360],[day*1440+1320,day*1440+1440]])
+   total+=Math.max(0,Math.min(finish,hi)-Math.max(a,lo));
+ }
+ return total/60;
+}
+function fairnessData(){
+ const byId=new Map(plannerPeople.map(p=>[p.id,{id:p.id,name:p.name,count:0,hours:0,night:0,nightHours:0,saturday:0,sunday:0,days:[0,0,0,0,0,0,0]}]));
+ for(const row of publishedFairnessRows){
+  let rec=byId.get(row.id);
+  if(!rec){rec={id:row.id,name:'Personel kaydı bulunamadı ('+String(row.id).slice(0,8)+')',count:0,hours:0,night:0,nightHours:0,saturday:0,sunday:0,days:[0,0,0,0,0,0,0]};byId.set(row.id,rec)}
+  rec.count++;rec.hours+=row.hours;
+  const weekday=new Date(row.date+'T12:00:00').getDay();rec.days[(weekday+6)%7]++;
+  if(weekday===6)rec.saturday++;if(weekday===0)rec.sunday++;
+  const night=nightHoursForShift(row);rec.nightHours+=night;if(night>0)rec.night++;
+ }
+ return [...byId.values()].sort((a,b)=>a.name.localeCompare(b.name,'tr'));
+}
+async function loadPublishedFairness(){
+ const seq=++fairnessLoadSeq,inst=selectedInstitutionId,ym=monthKey();
+ const context=$('fairnessContext'),root=$('fairnessList');
+ publishedFairnessRows=[];root.textContent='Yayınlanmış nöbetler yükleniyor…';
+ try{
+  const {data,error}=await client.from('duty_programs').select('status,payload').eq('institution_id',inst).eq('month_key',ym).maybeSingle();
+  if(seq!==fairnessLoadSeq||selectedInstitutionId!==inst||monthKey()!==ym||currentPage!=='fairness')return;
+  if(error)throw error;
+  if(data?.status!=='published'){
+   context.textContent='Kurum: '+institutionName()+' · Ay: '+ym+' · Yayınlanmış program bulunamadı';
+   root.textContent='Seçili ay için yayınlanmış program yok. Geçici taslak rapora dahil edilmedi.';return;
+  }
+  publishedFairnessRows=pdfRowsFromPayload(data.payload);
+  context.textContent='Kurum: '+institutionName()+' · Ay: '+ym+' · Yayınlanmış program · '+publishedFairnessRows.length+' atama';
+  renderPublishedFairness();
+ }catch(e){root.textContent='Yayınlanmış program okunamadı: '+(e?.message||'Bilinmeyen hata')}
+}
+function renderPublishedFairness(){
+ const root=$('fairnessList');root.replaceChildren();const data=fairnessData();
+ if(!publishedFairnessRows.length){root.textContent='Yayınlanmış programda nöbet ataması bulunamadı.';return}
+ const active=data.filter(x=>x.count>0),max=Math.max(1,...active.map(x=>x.hours));
+ const graph=document.createElement('div');graph.style.cssText='margin:18px 0 22px;padding:16px;border:1px solid #587087;border-radius:12px';
+ const heading=document.createElement('strong');heading.textContent='Personel bazında toplam nöbet saati';graph.append(heading);
+ for(const x of active){const line=document.createElement('div');line.style.cssText='margin-top:12px';const label=document.createElement('div');label.textContent=x.name+' — '+Number(x.hours.toFixed(2)).toLocaleString('tr-TR')+' saat';label.style.marginBottom='5px';const track=document.createElement('div');track.style.cssText='height:12px;border-radius:8px;background:rgba(128,150,175,.25);overflow:hidden';const bar=document.createElement('div');bar.style.cssText='height:100%;width:'+Math.max(0,Math.min(100,x.hours/max*100))+'%;background:#36b5ac;border-radius:8px';track.append(bar);line.append(label,track);graph.append(line)}root.append(graph);
+ const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;min-width:1050px';
+ const labels=['Personel','Toplam nöbet','Toplam saat','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+ const head=document.createElement('tr');labels.forEach(label=>{const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:10px;border-bottom:1px solid #74879a';head.append(th)});tbl.append(head);
+ for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});tbl.append(tr)}root.append(tbl);
+ const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Resmî tatil ve önceki ayların geçmişi bu aşamada dahil değildir.';root.append(note);
+}
+$('fairnessCsv').onclick=()=>{
+ if(!publishedFairnessRows.length){alert('İndirilecek yayınlanmış nöbet verisi bulunamadı.');return}
+ const rows=[['Personel','Toplam Nöbet','Toplam Saat','Gece Nöbeti','Gece Saati (22-06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours.toFixed(2),x.night,x.nightHours.toFixed(2),...x.days])];
+ const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+ const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='yayinlanmis-adalet-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)
+};
 
 // Diğer İşlemler açılır menüsü.
 $('moreActionsBtn').onclick=()=>{
