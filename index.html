@@ -524,7 +524,8 @@ $('fairnessRefresh').onclick=()=>loadPublishedFairness();
 function renderPublishedFairness(){
  const root=$('fairnessList');root.replaceChildren();const data=fairnessData();
  if(!publishedFairnessRows.length){root.textContent='Yayınlanmış programda nöbet ataması bulunamadı.';return}
- const active=data.filter(x=>x.count>0),max=Math.max(1,...active.map(x=>x.hours));\n const summary=document.createElement('p');summary.className='sub';summary.textContent='Toplam '+publishedFairnessRows.length+' nöbet · '+Number(active.reduce((sum,x)=>sum+x.hours,0).toFixed(2)).toLocaleString('tr-TR')+' saat · '+active.length+' görevli personel';root.append(summary);
+ const active=data.filter(x=>x.count>0),max=Math.max(1,...active.map(x=>x.hours));
+ const summary=document.createElement('p');summary.className='sub';summary.textContent='Toplam '+publishedFairnessRows.length+' nöbet · '+Number(active.reduce((sum,x)=>sum+x.hours,0).toFixed(2)).toLocaleString('tr-TR')+' saat · '+active.length+' görevli personel';root.append(summary);
  const graph=document.createElement('div');graph.style.cssText='margin:18px 0 22px;padding:16px;border:1px solid #587087;border-radius:12px';
  const heading=document.createElement('strong');heading.textContent='Personel bazında toplam nöbet saati';graph.append(heading);
  for(const x of active){const line=document.createElement('div');line.style.cssText='margin-top:12px';const label=document.createElement('div');label.textContent=x.name+' — '+Number(x.hours.toFixed(2)).toLocaleString('tr-TR')+' saat';label.style.marginBottom='5px';const track=document.createElement('div');track.style.cssText='height:12px;border-radius:8px;background:rgba(128,150,175,.25);overflow:hidden';const bar=document.createElement('div');bar.style.cssText='height:100%;width:'+Math.max(0,Math.min(100,x.hours/max*100))+'%;background:#36b5ac;border-radius:8px';track.append(bar);line.append(label,track);graph.append(line)}root.append(graph);
