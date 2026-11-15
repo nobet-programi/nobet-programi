@@ -74,7 +74,7 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
 <div id="adminCenterPage" class="hidden panel"><div class="section-head"><h2>♛ Ana Yönetici · Kurum ve Yönetici Merkezi</h2><div class="flex"><button class="btn primary" id="adminAddInstitutionBtn">+ Kurum Ekle</button><button class="btn" id="adminCenterRefresh">Yenile</button></div></div><p class="sub">Kurumların yöneticilerini, personel sayılarını ve durumlarını görüntüleyin. İşlem yapmak için ilgili kurumu seçin.</p><div id="adminCenterStatus" class="statusline"></div><div id="adminCenterList" class="institution-list"></div></div>
 <div id="managerCenterPage" class="hidden panel"><div class="section-head"><h2>⚙ Kurum Yönetici Paneli</h2><button class="btn" id="managerCenterRefresh">Yenile</button></div><p class="sub">Yalnızca yetkili olduğunuz kurumun yönetim işlemleri. Yönetici ekleme yetkisi sunucu tarafında doğrulanmalıdır.</p><div id="managerCenterStatus" class="statusline"></div><div id="managerCenterList" class="institution-list"></div></div>
 <div id="institutionsPage" class="hidden"><div class="section-head"><h2>Kurum Yönetimi</h2><button class="btn primary" id="addInstitutionBtn">+ Kurum Ekle</button></div><div id="institutionMsg" class="statusline" role="status"></div><div id="institutionList" class="institution-list"></div></div>
- <div id="peoplePage" class="hidden"><div class="section-head"><h2>Personeller</h2><div class="flex"><button class="btn" id="manageUnitsBtn">🏢 Bölüm / Birimler</button><button class="btn primary" id="addUserBtn">+ Personel Ekle</button></div></div><div class="panel"><div id="personnelContext" class="sub"></div><div id="personnelMsg" class="statusline" role="status"></div><div id="realPersonnelList" class="institution-list"></div></div></div>
+ <div id="peoplePage" class="hidden"><div class="section-head"><h2>Personeller</h2><div class="flex"><button class="btn" id="manageUnitsBtn">🏢 Bölüm / Birimler</button><button class="btn primary" id="addUserBtn">+ Personel Ekle</button></div></div><div class="tabs" style="margin:0 0 16px;gap:10px"><button type="button" class="btn active" id="peoplePersonnelTab">👥 Personel İşlemleri</button><button type="button" class="btn" id="peopleManagersTab">🛡 Yönetici İşlemleri</button></div><div id="managerOperations" class="panel hidden"><div class="section-head"><h3>Kurum Yöneticileri</h3><button type="button" class="btn primary" id="addManagerFromPeople">+ Yönetici Ekle</button></div><p class="sub">Yöneticiler yalnızca kendi kurumları için yetkilendirilir. Ana Yönetici tüm kurumları denetleyebilir.</p><div id="managerOperationsStatus" class="statusline"></div><div id="managerOperationsList" class="institution-list"></div></div><div id="personnelOperations" class="panel"><div id="personnelContext" class="sub"></div><div id="personnelMsg" class="statusline" role="status"></div><div id="realPersonnelList" class="institution-list"></div></div></div></div>
 <div id="plannerPage" class="hidden"><div class="section-head"><h2>Aylık / Haftalık Nöbet Taslağı</h2><div class="flex"><button class="btn" id="prevMonth">‹</button><strong id="monthLabel"></strong><button class="btn" id="nextMonth">›</button><button class="btn" id="viewToggle">Haftalık Görünüm</button><button class="btn hidden" id="prevWeek">← Önceki Hafta</button><button class="btn hidden" id="nextWeek">Sonraki Hafta →</button></div></div><p class="sub" style="margin:0 0 12px">Vardiyaları planlayın, kaydedin ve yayınlayın. Ek araçlar “Diğer İşlemler” menüsündedir.</p>
 <div class="flex" style="margin-bottom:15px;align-items:flex-start">
   <button class="btn primary" id="saveBtn">💾 Kaydet</button>
@@ -139,7 +139,7 @@ $('managerCenterBtn').onclick=()=>navigate('managerCenter');
 $('adminCenterRefresh').onclick=()=>loadAdminCenter();
 $('adminAddInstitutionBtn').onclick=()=>$('addInstitutionBtn').click();
 $('managerCenterRefresh').onclick=()=>loadManagerCenter();
-function selectCenterInstitution(o){if(selectedInstitutionId!==o.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=o.id;$('selectedInstitutionLabel').textContent='Kurum: '+o.name;}
+function selectCenterInstitution(o){if(selectedInstitutionId!==o.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=o.id;selectedInstitutionName=o.name||'';$('selectedInstitutionLabel').textContent='Kurum: '+o.name;}
 function centerCard(name,detail,onClick){const b=document.createElement('button');b.className='institution-card';b.type='button';const strong=document.createElement('strong');strong.textContent=name;const small=document.createElement('small');small.textContent=detail;b.append(strong,small);b.onclick=onClick;return b}
 async function loadAdminCenter(){
  const list=$('adminCenterList'),status=$('adminCenterStatus');list.replaceChildren();
@@ -185,7 +185,7 @@ async function openManagerLanding(){
  }catch(e){console.error('Kurum açılışı',e);navigate('managerCenter');status.textContent='Kurum yetkisi doğrulanamadı. Lütfen yöneticinizle görüşün.'}
 }
 $('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();showLogin()};$('homeBtn').onclick=()=>navigate('home');document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
-function navigate(page){currentPage=page;$('adminCenterBtn').classList.add('hidden');$('managerCenterBtn').classList.add('hidden');$('homeBtn').classList.add('hidden');const backButton=$('backToInstitutionsBtn');backButton.classList.toggle('hidden',page==='adminCenter'||page==='managerCenter');backButton.textContent='← Geri Dön';['home','institutions','people','planner','swap','fairness','adminCenter','managerCenter'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='adminCenter'){if(!isAdmin){navigate('home');return}$('adminCenterPage').classList.remove('hidden');$('pageTitle').textContent='Ana Yönetici';loadAdminCenter()}else if(page==='managerCenter'){$('managerCenterPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetici Paneli';loadManagerCenter()}else if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeInstitutionBrand();loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';loadPersonnel()}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
+function navigate(page){currentPage=page;$('adminCenterBtn').classList.add('hidden');$('managerCenterBtn').classList.add('hidden');$('homeBtn').classList.add('hidden');const backButton=$('backToInstitutionsBtn');backButton.classList.toggle('hidden',page==='adminCenter'||page==='managerCenter');backButton.textContent='← Geri Dön';['home','institutions','people','planner','swap','fairness','adminCenter','managerCenter'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='adminCenter'){if(!isAdmin){navigate('home');return}$('adminCenterPage').classList.remove('hidden');$('pageTitle').textContent='Ana Yönetici';loadAdminCenter()}else if(page==='managerCenter'){$('managerCenterPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetici Paneli';loadManagerCenter()}else if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeInstitutionBrand();loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';switchPeopleTab('personnel')}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
 let homeBrandSequence=0;
 async function loadHomeInstitutionBrand(){
  const seq=++homeBrandSequence, id=selectedInstitutionId;
@@ -233,7 +233,7 @@ async function loadInstitutions(){
  if(error){msg.textContent='Kurumlar şu anda görüntülenemiyor. Lütfen daha sonra tekrar deneyin.';return}
  institutions=data||[];msg.textContent=institutionCountText(institutions.length);
  if(!institutions.length)return;
- for(const inst of institutions){const b=document.createElement('button');b.type='button';b.className='institution-card'+(selectedInstitutionId===inst.id?' selected':'');const title=document.createElement('strong');title.textContent=inst.name||'İsimsiz kurum';const kind=document.createElement('small');kind.textContent=inst.institution_type==='school'?'Okul':inst.institution_type==='shift_organization'?'Vardiyalı Kurum':inst.institution_type==='private_organization'?'Özel Kurum':inst.institution_type||'Kurum';const note=document.createElement('small');note.style.display='block';note.style.marginTop='10px';note.textContent=inst.is_active===false?'⏸ Pasif kurum':selectedInstitutionId===inst.id?'✓ Seçili kurum':'Seçmek için tıklayın';if(inst.logo_url&&/^https:\/\//i.test(inst.logo_url)){const logo=document.createElement('img');logo.className='institution-logo';logo.src=inst.logo_url;logo.alt=inst.name+' logosu';logo.onerror=()=>logo.remove();b.append(logo)}b.append(title,kind,note);const card=document.createElement('div');card.style.cssText='display:flex;flex-direction:column;gap:8px';card.append(b);if(isAdmin){const edit=document.createElement('button');edit.type='button';edit.className='btn ghost';edit.textContent='✎ Kurum Bilgilerini Düzenle';edit.onclick=()=>openEditInstitution(inst);card.append(edit)}b.onclick=()=>{if(inst.is_active===false){alert('Bu kurum pasif. Önce Kurum Bilgilerini Düzenle bölümünden aktifleştirin.');return}if(selectedInstitutionId!==inst.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=inst.id;$('selectedInstitutionLabel').textContent='Kurum: '+(inst.name||'İsimsiz');loadInstitutions();loadHomeStats()};list.append(card)}
+ for(const inst of institutions){const b=document.createElement('button');b.type='button';b.className='institution-card'+(selectedInstitutionId===inst.id?' selected':'');const title=document.createElement('strong');title.textContent=inst.name||'İsimsiz kurum';const kind=document.createElement('small');kind.textContent=inst.institution_type==='school'?'Okul':inst.institution_type==='shift_organization'?'Vardiyalı Kurum':inst.institution_type==='private_organization'?'Özel Kurum':inst.institution_type||'Kurum';const note=document.createElement('small');note.style.display='block';note.style.marginTop='10px';note.textContent=inst.is_active===false?'⏸ Pasif kurum':selectedInstitutionId===inst.id?'✓ Seçili kurum':'Seçmek için tıklayın';if(inst.logo_url&&/^https:\/\//i.test(inst.logo_url)){const logo=document.createElement('img');logo.className='institution-logo';logo.src=inst.logo_url;logo.alt=inst.name+' logosu';logo.onerror=()=>logo.remove();b.append(logo)}b.append(title,kind,note);const card=document.createElement('div');card.style.cssText='display:flex;flex-direction:column;gap:8px';card.append(b);if(isAdmin){const edit=document.createElement('button');edit.type='button';edit.className='btn ghost';edit.textContent='✎ Kurum Bilgilerini Düzenle';edit.onclick=()=>openEditInstitution(inst);card.append(edit)}b.onclick=()=>{if(inst.is_active===false){alert('Bu kurum pasif. Önce Kurum Bilgilerini Düzenle bölümünden aktifleştirin.');return}if(selectedInstitutionId!==inst.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=inst.id;selectedInstitutionName=inst.name||'';$('selectedInstitutionLabel').textContent='Kurum: '+(inst.name||'İsimsiz');loadInstitutions();loadHomeStats()};list.append(card)}
 }
 function institutionCountText(n){return n+' kurum listelendi.'}
 function openEditInstitution(inst){
@@ -283,13 +283,13 @@ $('addInstitutionBtn').onclick=()=>{
  };
 };
 // Real personnel: authentication account is created by the existing secured Edge Function.
-let unitRecords=[];let personnelRecords=[];let activePerson=null;let offMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);let offSet=new Set();
+let selectedInstitutionName='';let unitRecords=[];let personnelRecords=[];let activePerson=null;let offMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);let offSet=new Set();
 const shiftHours=[['08:00','16:00'],['16:00','00:00'],['00:00','08:00']];
-function institutionName(){return institutions.find(x=>x.id===selectedInstitutionId)?.name||'Kurum seçilmedi'}
+function institutionName(){return institutions.find(x=>x.id===selectedInstitutionId)?.name||selectedInstitutionName||'Kurum seçilmedi'}
 async function loadPersonnel(){
  const list=$('realPersonnelList');list.replaceChildren();$('personnelContext').textContent='Seçili kurum: '+institutionName();$('personnelMsg').textContent='';
  if(!selectedInstitutionId){$('personnelMsg').textContent='Önce Kurumları Yönet bölümünden bir kurum seçin.';return}
- if(!isAdmin){$('personnelMsg').textContent='Personel yönetimi için yönetici yetkisi gereklidir.';return}
+ 
  $('personnelMsg').textContent='Personeller yükleniyor…';
  const {data:members,error}=await client.from('institution_memberships').select('user_id,role,is_active').eq('institution_id',selectedInstitutionId).order('created_at',{ascending:true});
  if(error){$('personnelMsg').textContent='Personel listesi yüklenemedi.';return}
@@ -320,13 +320,55 @@ async function loadPersonnel(){
   await render();
  };
 $('addUserBtn').onclick=()=>{
- if(!isAdmin||!selectedInstitutionId){alert('Önce kurum seçin ve Ana Yönetici oturumuyla giriş yapın.');return}
+ if(!selectedInstitutionId){alert('Önce kurum seçin.');return}
  modal('Kurum Personeli Ekle',`<p class="sub">${escapeHtml(institutionName())} · Yeni hesap oluşturulur ve seçili kuruma bağlanır.</p><form id="createPersonForm"><div class="field"><label>Ad</label><input name="first_name" maxlength="80" required></div><div class="field"><label>Soyad</label><input name="last_name" maxlength="80" required></div><div class="field"><label>E-posta</label><input name="email" type="email" required></div><div class="field"><label>Geçici şifre (en az 6 karakter)</label><input name="password" type="password" minlength="6" autocomplete="new-password" required></div><div class="field"><label>Rol</label><select name="role"><option value="personnel">Personel</option><option value="authorized">Yetkili</option><option value="manager">Kurum Yöneticisi</option></select></div><button type="submit" class="btn primary">Personeli Kaydet</button></form><div id="createPersonMsg" class="notice hidden"></div><div id="attachPersonArea" class="hidden"><p class="sub">Hesap açıldı ancak kuruma bağlanamadı. Aynı hesabı yeniden oluşturmayın; aşağıdaki butonla bağlantıyı tekrar deneyin.</p><button id="retryAttach" class="btn">Kuruma Bağlamayı Yeniden Dene</button></div>`);
  const form=$('createPersonForm');let pending=null;
  async function attach(userId,role){const {error}=await client.from('institution_memberships').insert({institution_id:selectedInstitutionId,user_id:userId,role,is_active:true});if(error)throw error;closeModal();await loadPersonnel()}
  $('retryAttach').onclick=async()=>{if(!pending)return;const btn=$('retryAttach');btn.disabled=true;try{await attach(pending.id,pending.role)}catch(e){notify('createPersonMsg','Personel kuruma bağlanamadı. Lütfen yeniden deneyin.','error')}finally{btn.disabled=false}};
  form.onsubmit=async e=>{e.preventDefault();const btn=form.querySelector('[type="submit"]');btn.disabled=true;try{const fields=Object.fromEntries(new FormData(form));const role=fields.role;delete fields.role;const {data,error}=await client.functions.invoke('manage-users',{body:fields});if(error)throw error;if(!data?.success)throw Error(data?.error||'Hesap oluşturulamadı');pending={id:data.user_id,role};form.classList.add('hidden');try{await attach(pending.id,pending.role)}catch(err){$('attachPersonArea').classList.remove('hidden');notify('createPersonMsg','Hesap oluşturuldu ancak kurum bağlantısı tamamlanamadı. Yeniden dene butonunu kullanın.','error')}}catch(err){notify('createPersonMsg','Personel oluşturulamadı. Lütfen yöneticinizle iletişime geçin.','error');btn.disabled=false}};
 };
+
+let peopleTab='personnel';
+function switchPeopleTab(tab){
+ peopleTab=tab;
+ $('peoplePersonnelTab').classList.toggle('active',tab==='personnel');
+ $('peopleManagersTab').classList.toggle('active',tab==='managers');
+ $('personnelOperations').classList.toggle('hidden',tab!=='personnel');
+ $('managerOperations').classList.toggle('hidden',tab!=='managers');
+ $('addUserBtn').classList.toggle('hidden',tab!=='personnel');
+ $('manageUnitsBtn').classList.toggle('hidden',tab!=='personnel');
+ if(tab==='managers')loadManagersInPeople();else loadPersonnel();
+}
+$('peoplePersonnelTab').onclick=()=>switchPeopleTab('personnel');
+$('peopleManagersTab').onclick=()=>switchPeopleTab('managers');
+async function loadManagersInPeople(){
+ const list=$('managerOperationsList'),status=$('managerOperationsStatus');list.replaceChildren();
+ if(!selectedInstitutionId){status.textContent='Önce kurum seçin.';return}
+ status.textContent='Yöneticiler yükleniyor…';
+ try{
+  const {data:members,error}=await client.from('institution_memberships').select('user_id,is_active,role').eq('institution_id',selectedInstitutionId).eq('role','manager');
+  if(error)throw error;
+  const ids=(members||[]).map(m=>m.user_id);
+  const profiles=ids.length?await client.from('user_profiles').select('id,first_name,last_name,is_active').in('id',ids):{data:[],error:null};
+  if(profiles.error)throw profiles.error;
+  const byId=new Map((profiles.data||[]).map(p=>[p.id,p]));
+  for(const m of members||[]){
+   const p=byId.get(m.user_id),card=document.createElement('div');card.className='institution-card';
+   const name=document.createElement('strong');name.textContent=[p?.first_name,p?.last_name].filter(Boolean).join(' ')||'Yönetici hesabı';
+   const info=document.createElement('small');info.textContent=m.is_active===false?'Pasif yönetici':'Aktif kurum yöneticisi';
+   card.append(name,info);list.append(card);
+  }
+  status.textContent=(members||[]).length+' yönetici listelendi.';
+ }catch(e){console.error('Yönetici listesi',e);status.textContent='Yöneticiler okunamadı. Kurum erişim yetkilerini kontrol edin.'}
+}
+$('addManagerFromPeople').onclick=()=>{
+ if(!selectedInstitutionId){alert('Önce kurum seçin.');return}
+ if(!isAdmin){alert('Kurum yöneticisinin yeni yönetici oluşturabilmesi için sunucu tarafında yetkili hesap oluşturma işlemi kurulmalıdır. Bu işlem henüz etkin değil.');return}
+ $('addUserBtn').click();
+ const form=$('createPersonForm');
+ if(form){const role=form.querySelector('[name="role"]');if(role){role.value='manager';role.closest('.field').classList.add('hidden')}const title=document.querySelector('#modalTitle');if(title)title.textContent='Kurum Yöneticisi Ekle'}
+};
+
 function dateKey(d){return `${offMonth.getFullYear()}-${String(offMonth.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
 async function openRealPerson(p){
  activePerson=p;offMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
