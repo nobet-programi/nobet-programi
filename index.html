@@ -604,34 +604,66 @@ function selectedIsShiftInstitution(){const current=institutions.find(x=>String(
 function updateShiftExcelVisibility(){const b=$('exportShiftExcel');if(b)b.classList.toggle('hidden',!selectedIsShiftInstitution())}
 async function refreshShiftExcelFromServer(){if(!selectedInstitutionId||!client)return;const id=selectedInstitutionId;try{const {data,error}=await client.from('institutions').select('id,institution_type').eq('id',id).maybeSingle();if(error||!data||String(selectedInstitutionId)!==String(id))return;const current=institutions.find(x=>String(x.id)===String(id));if(current)current.institution_type=data.institution_type;else institutions.push(data);updateShiftExcelVisibility()}catch(err){console.warn('Kurum türü okunamadı',err)}}
 async function ensureExcelLibrary(){
- if(globalThis.XLSX)return;
- await new Promise((resolve,reject)=>{const el=document.createElement('script');el.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';el.onload=resolve;el.onerror=()=>reject(new Error('Excel kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.'));document.head.appendChild(el)});
- if(!globalThis.XLSX)throw new Error('Excel oluşturma kütüphanesi kullanılamıyor.');
+ if(globalThis.ExcelJS)return;
+ await new Promise((resolve,reject)=>{const el=document.createElement('script');el.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';el.onload=resolve;el.onerror=()=>reject(new Error('Excel kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.'));document.head.appendChild(el)});
+ if(!globalThis.ExcelJS)throw new Error('Excel biçimlendirme kütüphanesi kullanılamıyor.');
 }
-function exportShiftPuantaj(settings,personUnitMap){
+function excelPersonColor(id){
+ const idx=personnelColorIndex(id);
+ if(idx<PERSON_MAIN_COLORS.length)return PERSON_MAIN_COLORS[idx][0];
+ const hue=PERSON_EXTRA_HUES[(idx-10)%PERSON_EXTRA_HUES.length],s=.95,l=.68;
+ const f=n=>{const k=(n+hue/30)%12,a=s*Math.min(l,1-l);return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1))))};
+ return '#'+[f(0),f(8),f(4)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function excelTextOnColor(hex){
+ const v=hex.replace('#','');const rgb=[0,2,4].map(i=>parseInt(v.slice(i,i+2),16)/255).map(x=>x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4));
+ return (.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2])>.42?'172033':'FFFFFF';
+}
+async function exportShiftPuantaj(settings,personUnitMap){
  if(!selectedIsShiftInstitution()){alert('Bu Excel puantajı yalnızca vardiyalı kurumlar içindir.');return}
  if(!selectedInstitutionId){alert('Önce kurum seçin.');return}
- const year=month.getFullYear(),mon=month.getMonth(),count=new Date(year,mon+1,0).getDate();
- const shifts=[];const shiftKeys=new Set();
- for(let d=1;d<=count;d++){const date=monthKey()+'-'+String(d).padStart(2,'0');for(const sh of getShifts(date)){const key=sh.start+'–'+sh.end;if(!shiftKeys.has(key)){shiftKeys.add(key);shifts.push(key)}}}
- const headers=['TARİH','GÜN',...shifts.map((sh,i)=>settings.shiftLabels[i]||sh),'YILLIK İZİN','RAPOR','MAZERET İZNİ'];
- const matrix=[[settings.title||'AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ'],['KURUM ADI: '+settings.center],['BİRİM ADI: '+settings.unitName],['DÖNEM: '+settings.period],[],[settings.hoursTitle||'ÇALIŞMA SAAT ARALIĞI',...headers.slice(1)]];
- const weekdays=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
- for(let d=1;d<=count;d++){
-  const date=monthKey()+'-'+String(d).padStart(2,'0');const dt=new Date(year,mon,d);
-  const row=[date,weekdays[dt.getDay()],...shifts.map(()=>''),'','',''];
-  const daily=getShifts(date);
-  daily.forEach((sh,i)=>{const col=shifts.indexOf(sh.start+'–'+sh.end)+2;if(col<2)return;const names=[];for(let seat=0;seat<Number(sh.count||0);seat++){const id=draft[date+'|'+i+'|'+seat];if(!id)continue;if(settings.unitId&&personUnitMap.get(String(id))!==settings.unitName)continue;names.push(plannerPeople.find(p=>String(p.id)===String(id))?.name||'Personel ('+id+')')}
-   if(names.length)row[col]=[row[col],names.join(' / ')].filter(Boolean).join(' / ');
-  });matrix.push(row)
+ const year=month.getFullYear(),mon=month.getMonth(),days=new Date(year,mon+1,0).getDate(),key=monthKey();
+ const groups=[],byShift=new Map();
+ for(let d=1;d<=days;d++){
+  const date=key+'-'+String(d).padStart(2,'0');
+  getShifts(date).forEach(sh=>{const k=sh.start+'–'+sh.end;if(!byShift.has(k)){const g={key:k,width:0,shiftLabel:settings.shiftLabels[groups.length]||k};groups.push(g);byShift.set(k,g)};byShift.get(k).width=Math.max(byShift.get(k).width,Number(sh.count)||1)})
  }
- const ws=XLSX.utils.aoa_to_sheet(matrix);
- ws['!cols']=[{wch:15},{wch:14},...shifts.map(()=>({wch:29})),{wch:17},{wch:17},{wch:19}];
- ws['!rows']=[{hpt:29},{hpt:24},{hpt:22},{hpt:22},{hpt:10},{hpt:30},...Array.from({length:count},()=>({hpt:33}))];
- ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:headers.length-1}},{s:{r:1,c:0},e:{r:1,c:headers.length-1}},{s:{r:2,c:0},e:{r:2,c:headers.length-1}},{s:{r:3,c:0},e:{r:3,c:headers.length-1}}];
- ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:5,c:0},e:{r:5+count,c:headers.length-1}})};
- const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aylık Puantaj');
- XLSX.writeFile(wb,'vardiyali-kurum-puantaj-'+monthKey()+'.xlsx');
+ let col=2;for(const g of groups){g.first=col;g.width=Math.max(1,g.width);col+=g.width}
+ const leaveStart=col,totalCols=col+3;
+ const wb=new ExcelJS.Workbook();wb.creator='NÖBET PROGRAMI';wb.created=new Date();const ws=wb.addWorksheet('Aylık Puantaj',{views:[{state:'frozen',xSplit:1,ySplit:7}]});
+ ws.properties.defaultRowHeight=21;
+ ws.getColumn(1).width=17;for(let c=2;c<=totalCols;c++)ws.getColumn(c).width=c>=leaveStart+1?17:17;
+ const dark='10243F',gold='F5C66A',light='DDE8F5',border={style:'thin',color:{argb:'FF23374D'}};
+ function paint(cell,fill,fg='10243F',bold=false,size=10){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+fill}};cell.font={name:'Arial',size,bold,color:{argb:'FF'+fg}};cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};cell.border={top:border,bottom:border,left:border,right:border}}
+ function band(row,label,fill,fg='FFFFFF',size=11){ws.mergeCells(row,1,row,totalCols);const c=ws.getCell(row,1);c.value=label;paint(c,fill,fg,true,size);ws.getRow(row).height=row===1?34:25}
+ band(1,settings.title||'AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ',dark,'FFFFFF',16);
+ band(2,'KURUM ADI: '+settings.center,'203B60');
+ band(3,'BİRİM ADI: '+settings.unitName,'203B60');
+ band(4,'DÖNEM: '+settings.period,'203B60');
+ ws.getRow(5).height=12;
+ ws.mergeCells(6,1,7,1);ws.getCell(6,1).value=settings.hoursTitle||'ÇALIŞMA SAAT ARALIĞI';paint(ws.getCell(6,1),'B8CCE4',dark,true,9);
+ for(const g of groups){const first=g.first+1,last=g.first+g.width; if(g.width>1)ws.mergeCells(6,first,6,last);ws.getCell(6,first).value=g.shiftLabel;paint(ws.getCell(6,first),'F9D65C',dark,true,10);for(let j=0;j<g.width;j++){const c=ws.getCell(7,first+j);c.value=g.width>1?'PERSONEL '+(j+1):g.shiftLabel;paint(c,'D8E5F4',dark,true,9)}}
+ ['YILLIK İZİN','RAPOR','MAZERET İZNİ'].forEach((h,i)=>{const c=leaveStart+i+1;ws.mergeCells(6,c,7,c);ws.getCell(6,c).value=h;paint(ws.getCell(6,c),i===0?'F9D65C':'C9E8D3',dark,true,9)});
+ ws.getRow(6).height=29;ws.getRow(7).height=25;
+ const weekdays=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+ for(let d=1;d<=days;d++){
+  const date=key+'-'+String(d).padStart(2,'0'),dt=new Date(year,mon,d),row=7+d,weekend=[0,6].includes(dt.getDay());ws.getRow(row).height=30;
+  for(let c=1;c<=totalCols;c++)paint(ws.getCell(row,c),weekend?'B9E9F8':'FFFFFF',dark,false,9);
+  const dateCell=ws.getCell(row,1);dateCell.value=dt;dateCell.numFmt='dd.mm.yyyy';dateCell.font={name:'Arial',bold:true,size:10,color:{argb:'FF'+dark}};
+  const daily=getShifts(date);
+  daily.forEach((sh,i)=>{const g=byShift.get(sh.start+'–'+sh.end);if(!g)return;
+   for(let seat=0;seat<Number(sh.count||0);seat++){
+    const id=draft[date+'|'+i+'|'+seat];if(!id)continue;
+    if(settings.unitId&&personUnitMap.get(String(id))!==settings.unitName)continue;
+    const c=ws.getCell(row,g.first+seat+1),name=plannerPeople.find(p=>String(p.id)===String(id))?.name||'Personel';
+    const hex=excelPersonColor(id).replace('#','').toUpperCase();c.value=name;paint(c,hex,excelTextOnColor(hex),true,9)
+   }
+  });
+ }
+ ws.pageSetup={paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.2,right:.2,top:.35,bottom:.35,header:.1,footer:.1}};
+ ws.printOptions={horizontalCentered:true};ws.headerFooter.oddFooter='Sayfa &P / &N';
+ const buffer=await wb.xlsx.writeBuffer();const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='vardiyali-kurum-puantaj-'+key+'.xlsx';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 new MutationObserver(updateShiftExcelVisibility).observe($('selectedInstitutionLabel'),{childList:true,subtree:true,characterData:true});
 // Excel önizleme ayarları yalnızca dışa aktarmaya uygulanır; kurum/birim kayıtlarını değiştirmez.
@@ -656,7 +688,7 @@ $('exportShiftExcel').onclick=async()=>{
    if(error)throw error;
    const personUnitMap=new Map((data||[]).map(p=>[String(p.user_id),p.unit_name]));
    const settings={unitId:unit.id,unitName:unit.name,center:String(fd.get('center')||'').trim(),title:String(fd.get('title')||'').trim(),period:String(fd.get('period')||'').trim(),hoursTitle:String(fd.get('hoursTitle')||'').trim(),shiftLabels:shifts.map((_,i)=>String(fd.get('shiftLabel'+i)||'').trim())};
-   await ensureExcelLibrary();exportShiftPuantaj(settings,personUnitMap);closeModal();
+   await ensureExcelLibrary();await exportShiftPuantaj(settings,personUnitMap);closeModal();
   }catch(err){console.error('Puantaj Excel',err);notify('puantajSettingsMsg','Excel indirilemedi: '+(err?.message||err),'error')}finally{button.disabled=false}
  };
 };
