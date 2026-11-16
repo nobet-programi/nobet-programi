@@ -240,7 +240,7 @@ async function openManagerLanding(){
  }catch(e){console.error('Kurum açılışı',e);navigate('managerCenter');status.textContent='Kurum yetkisi doğrulanamadı. Lütfen yöneticinizle görüşün.'}
 }
 $('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();showLogin()};$('homeBtn').onclick=()=>navigate('home');document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
-function navigate(page){currentPage=page;$('adminCenterBtn').classList.add('hidden');$('managerCenterBtn').classList.add('hidden');$('homeBtn').classList.add('hidden');const backButton=$('backToInstitutionsBtn');backButton.classList.toggle('hidden',page==='adminCenter'||page==='managerCenter');backButton.textContent='← Geri Dön';['home','institutions','people','planner','swap','fairness','adminCenter','managerCenter'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='adminCenter'){if(!isAdmin){navigate('home');return}$('adminCenterPage').classList.remove('hidden');$('pageTitle').textContent='Ana Yönetici';loadAdminCenter()}else if(page==='managerCenter'){$('managerCenterPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetici Paneli';loadManagerCenter()}else if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeInstitutionBrand();loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';loadPersonnel()}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();refreshPersonnelColors();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
+function navigate(page){currentPage=page;$('adminCenterBtn').classList.add('hidden');$('managerCenterBtn').classList.add('hidden');$('homeBtn').classList.add('hidden');const backButton=$('backToInstitutionsBtn');backButton.classList.toggle('hidden',page==='adminCenter'||page==='managerCenter');backButton.textContent='← Geri Dön';['home','institutions','people','planner','swap','fairness','adminCenter','managerCenter'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='adminCenter'){if(!isAdmin){navigate('home');return}$('adminCenterPage').classList.remove('hidden');$('pageTitle').textContent='Ana Yönetici';loadAdminCenter()}else if(page==='managerCenter'){$('managerCenterPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetici Paneli';loadManagerCenter()}else if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeInstitutionBrand();loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';loadPersonnel()}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
 let homeBrandSequence=0;
 async function loadHomeInstitutionBrand(){
  const seq=++homeBrandSequence, id=selectedInstitutionId;
@@ -356,18 +356,24 @@ async function refreshInstitutionPermission(){
  $('manageUnitsBtn').disabled=!canManageSelectedInstitution;
 }
 function institutionName(){return institutions.find(x=>x.id===selectedInstitutionId)?.name||selectedInstitutionName||'Kurum seçilmedi'}
+// Personeller ve Nöbet Hazırla aynı kurum üyeliği/profil kaynağını kullanır.
+async function fetchInstitutionPersonnel(institutionId){
+ const {data:members,error:memberError}=await client.from('institution_memberships').select('user_id,role,is_active').eq('institution_id',institutionId).order('created_at',{ascending:true});
+ if(memberError)throw memberError;
+ if(!members?.length)return [];
+ const ids=[...new Set(members.map(m=>m.user_id))];
+ const {data:profiles,error:profileError}=await client.from('user_profiles').select('id,first_name,last_name,phone,is_active').in('id',ids);
+ if(profileError)throw profileError;
+ const byId=new Map((profiles||[]).map(x=>[String(x.id),x]));
+ return members.map(m=>({...m,profile:byId.get(String(m.user_id))}));
+}
 async function loadPersonnel(){
  const list=$('realPersonnelList');list.replaceChildren();$('personnelContext').textContent='Seçili kurum: '+institutionName();$('personnelMsg').textContent='';
  if(!selectedInstitutionId){$('personnelMsg').textContent='Önce Kurumları Yönet bölümünden bir kurum seçin.';return}
  
  $('personnelMsg').textContent='Personeller yükleniyor…';
- const {data:members,error}=await client.from('institution_memberships').select('user_id,role,is_active').eq('institution_id',selectedInstitutionId).order('created_at',{ascending:true});
- if(error){$('personnelMsg').textContent='Personel listesi yüklenemedi.';return}
- if(!members?.length){$('personnelMsg').textContent='Henüz personel eklenmedi.';return}
- const ids=members.map(x=>x.user_id);
- const {data:profiles,error:profileError}=await client.from('user_profiles').select('id,first_name,last_name,phone,is_active').in('id',ids);
- if(profileError){$('personnelMsg').textContent='Personel bilgileri yüklenemedi.';return}
- const byId=new Map((profiles||[]).map(x=>[x.id,x]));personnelRecords=members.map(m=>({...m,profile:byId.get(m.user_id)}));
+ try{personnelRecords=await fetchInstitutionPersonnel(selectedInstitutionId)}catch(err){console.warn('Personel listesi',err);$('personnelMsg').textContent='Personel bilgileri yüklenemedi.';return}
+ if(!personnelRecords.length){$('personnelMsg').textContent='Henüz personel eklenmedi.';return}
  $('personnelMsg').textContent=personnelRecords.length+' kayıt listelendi.';
  for(const p of personnelRecords){const b=document.createElement('button');b.className='institution-card';b.type='button';const name=document.createElement('strong');name.textContent=((p.profile?.first_name||'')+' '+(p.profile?.last_name||'')).trim()||'Profil bulunamadı';const role=document.createElement('small');role.textContent=({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[p.role]||p.role;const detail=document.createElement('small');detail.textContent=(p.is_active===false||p.profile?.is_active===false?'⏸ Pasif · ':'✓ Aktif · ')+'Bilgiler, izinler ve çalışma sınırları';b.append(name,role,detail);b.onclick=()=>openRealPerson(p);list.append(b)}
 }
@@ -448,9 +454,9 @@ async function renderInfoTab(){
  client.from('user_profiles').update({first_name,last_name,phone:v.phone.trim()||null}).eq('id',activePerson.user_id).select('id').maybeSingle(),
  client.from('personnel_details').upsert({institution_id:selectedInstitutionId,user_id:activePerson.user_id,employee_no:v.employee_no.trim()||null,job_title:v.job_title.trim()||null,unit_name:v.unit_name.trim()||null,weekly_target:Number(v.weekly_target||0)},{onConflict:'institution_id,user_id'}),
  client.from('institution_memberships').update({role:v.role}).eq('institution_id',selectedInstitutionId).eq('user_id',activePerson.user_id).select('id').maybeSingle()
- ]);if(profile.error||details.error||membership.error||!profile.data||!membership.data)throw (profile.error||details.error||membership.error||Error('Kayıt güncellenemedi'));activePerson.profile={...activePerson.profile,first_name,last_name,phone:v.phone.trim()};activePerson.role=v.role;const chosenColor=document.getElementById('personDisplayColor')?.value;if(chosenColor)await savePersonnelColor(activePerson.user_id,chosenColor);notify('personError','Personel bilgileri ve takvim rengi kaydedildi.','ok');await loadPersonnel()}catch(err){friendlyError('Personel düzenleme',err)}finally{b.disabled=false}};
- $('togglePersonActive').onclick=async()=>{const next=activePerson.is_active===false;if(!confirm(next?'Personel aktifleştirilsin mi?':'Personel pasife alınsın mı? Yeni nöbet atamalarında görünmeyecek.'))return;const {data,error}=await client.from('institution_memberships').update({is_active:next}).eq('institution_id',selectedInstitutionId).eq('user_id',activePerson.user_id).select('id').maybeSingle();if(error||!data){friendlyError('Aktiflik güncelleme',error||Error('Kayıt bulunamadı'));return}activePerson.is_active=next;notify('personError',next?'Personel aktifleştirildi.':'Personel pasife alındı.','ok');await loadPersonnel();await renderInfoTab()};
- $('removePerson').onclick=async()=>{if(!confirm('Personelin bu kurumdaki üyeliği pasife alınacak; geçmiş nöbet kayıtları ve diğer kurum üyelikleri korunacak. Devam edilsin mi?'))return;const {data,error}=await client.from('institution_memberships').update({is_active:false}).eq('institution_id',selectedInstitutionId).eq('user_id',activePerson.user_id).select('id').maybeSingle();if(error||!data){friendlyError('Kurum üyeliği pasife alma',error||Error('Üyelik bulunamadı'));return}closeModal();await loadPersonnel();$('personnelMsg').textContent='Personel kurumda pasife alındı. Geçmişi ve diğer kurum üyelikleri korundu.'};
+ ]);if(profile.error||details.error||membership.error||!profile.data||!membership.data)throw (profile.error||details.error||membership.error||Error('Kayıt güncellenemedi'));activePerson.profile={...activePerson.profile,first_name,last_name,phone:v.phone.trim()};activePerson.role=v.role;const chosenColor=document.getElementById('personDisplayColor')?.value;if(chosenColor)await savePersonnelColor(activePerson.user_id,chosenColor);notify('personError','Personel bilgileri ve takvim rengi kaydedildi.','ok');await loadPersonnel();await loadPlannerPeople()}catch(err){friendlyError('Personel düzenleme',err)}finally{b.disabled=false}};
+ $('togglePersonActive').onclick=async()=>{const next=activePerson.is_active===false;if(!confirm(next?'Personel aktifleştirilsin mi?':'Personel pasife alınsın mı? Yeni nöbet atamalarında görünmeyecek.'))return;const {data,error}=await client.from('institution_memberships').update({is_active:next}).eq('institution_id',selectedInstitutionId).eq('user_id',activePerson.user_id).select('id').maybeSingle();if(error||!data){friendlyError('Aktiflik güncelleme',error||Error('Kayıt bulunamadı'));return}activePerson.is_active=next;notify('personError',next?'Personel aktifleştirildi.':'Personel pasife alındı.','ok');await loadPersonnel();await loadPlannerPeople();await renderInfoTab()};
+ $('removePerson').onclick=async()=>{if(!confirm('Personelin bu kurumdaki üyeliği pasife alınacak; geçmiş nöbet kayıtları ve diğer kurum üyelikleri korunacak. Devam edilsin mi?'))return;const {data,error}=await client.from('institution_memberships').update({is_active:false}).eq('institution_id',selectedInstitutionId).eq('user_id',activePerson.user_id).select('id').maybeSingle();if(error||!data){friendlyError('Kurum üyeliği pasife alma',error||Error('Üyelik bulunamadı'));return}closeModal();await loadPersonnel();await loadPlannerPeople();$('personnelMsg').textContent='Personel kurumda pasife alındı. Geçmişi ve diğer kurum üyelikleri korundu.'};
 }
 async function renderLeaveTab(){
  activatePersonTab('tabLeave');$('personTab').innerHTML='<p class="sub">İzinler yükleniyor…</p>';
@@ -496,17 +502,15 @@ async function loadPlannerPeople(){
  msg.textContent='Gerçek personeller yükleniyor…';
  try{
   const institutionId=selectedInstitutionId;
-  const {data:members,error:memberError}=await client.from('institution_memberships').select('user_id,role,is_active').eq('institution_id',institutionId).eq('is_active',true);
-  if(memberError)throw memberError;
+  const records=await fetchInstitutionPersonnel(institutionId);
   if(seq!==plannerLoadSequence||institutionId!==selectedInstitutionId)return;
-  if(!members?.length){msg.textContent='Bu kurumda aktif personel bulunmuyor.';renderCalendar();return}
-  const ids=[...new Set(members.map(m=>m.user_id))];
-  const {data:profiles,error:profileError}=await client.from('user_profiles').select('id,first_name,last_name,is_active').in('id',ids);
-  if(profileError)throw profileError;
+  // Havuz, Personeller ekranının aynı aktif üyelik/profil kayıtlarından üretilir.
+  plannerPeople=records.filter(m=>m.is_active===true&&m.profile?.is_active===true&&['personnel','authorized','manager'].includes(m.role)).map(m=>({id:m.user_id,name:((m.profile.first_name||'')+' '+(m.profile.last_name||'')).trim()||'İsimsiz personel',unit:({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[m.role]||m.role,membership:m,profile:m.profile}));
+  // Renklerin tek kaynağı da Personeller bölümünde kaydedilen kurum/personel renkleridir.
+  const cr=await client.from('personnel_display_colors').select('user_id,color').eq('institution_id',institutionId);
   if(seq!==plannerLoadSequence||institutionId!==selectedInstitutionId)return;
-  const byId=new Map((profiles||[]).map(p=>[p.id,p]));
-  if(selectedInstitutionId){const cr=await client.from('personnel_display_colors').select('user_id,color').eq('institution_id',selectedInstitutionId);if(!cr.error){personnelColors.clear();(cr.data||[]).forEach(x=>{if(/^#[0-9a-f]{6}$/i.test(x.color))personnelColors.set(x.user_id,x.color)})}}
-   plannerPeople=members.filter(m=>m.role==='personnel'||m.role==='authorized'||m.role==='manager').map(m=>({membership:m,profile:byId.get(m.user_id)})).filter(x=>x.profile?.is_active===true).map(x=>({id:x.membership.user_id,name:((x.profile.first_name||'')+' '+(x.profile.last_name||'')).trim()||'İsimsiz personel',unit:({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[x.membership.role]||x.membership.role,membership:x.membership,profile:x.profile}));
+  if(!cr.error){personnelColors.clear();(cr.data||[]).forEach(x=>{if(/^#[0-9a-f]{6}$/i.test(x.color))personnelColors.set(String(x.user_id),x.color)})}
+  else console.warn('Personel renkleri yüklenemedi:',cr.error.message);
   const monthStart=monthKey()+'-01',monthEnd=monthKey()+'-'+String(new Date(month.getFullYear(),month.getMonth()+1,0).getDate()).padStart(2,'0');
   const [limitsRes,blocksRes,leavesRes]=await Promise.all([
     client.from('personnel_limits').select('user_id,weekly_max,monthly_max').eq('institution_id',institutionId),
@@ -577,12 +581,14 @@ function renderPeople(){
   el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPlannerPerson(p.id)}});
  }
 }
-function openPlannerPerson(id){
- const p=plannerPeople.find(x=>x.id===id);if(!p)return;
- const assignments=Object.entries(draft).filter(([,v])=>v===id).map(([k])=>k).sort();
- modal('Personel Detayı — '+p.name,`<div class="tabs"><button class="btn active" data-tab="n">Nöbet Bilgileri</button><button class="btn" data-tab="p">Personel Bilgileri</button><button class="btn" data-tab="i">İzin Bilgileri</button></div><div id="detailBody"></div><p class="sub">Taslak atamaları henüz veritabanına kaydedilmiyor.</p>`);
- function tab(t){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));$('detailBody').innerHTML=t==='n'?`<div class="detail-grid"><div><small>Geçici taslak ataması</small><b>${assignments.length} vardiya</b></div><div><small>Yayınlanan nöbet saati</small><b>Henüz bağlı değil</b></div></div><p class="sub">Taslak günleri: ${assignments.length?assignments.map(escapeHtml).join(', '):'Yok'}</p>`:t==='p'?`<p><strong>${escapeHtml(p.name)}</strong></p><p class="sub">${escapeHtml(p.unit)} · Seçili kurumun gerçek kaydı</p>`:`<p class="sub">İzin bilgileri bu ekrana henüz bağlanmadı. Personeller ekranından gün/saat kapatma yönetilebilir.</p>`}
- document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));tab('n');
+async function openPlannerPerson(id){
+ // Havuzdaki personel, Personeller ekranındaki gerçek üç sekmeli pencereyi kullanır.
+ const p=plannerPeople.find(x=>String(x.id)===String(id));
+ if(!p)return;
+ const member=p.membership||personnelRecords.find(x=>String(x.user_id)===String(id));
+ if(!member){alert('Personel kaydı bulunamadı.');return}
+ const record={user_id:p.id,role:member.role,is_active:member.is_active,profile:p.profile||personnelRecords.find(x=>String(x.user_id)===String(id))?.profile||{}};
+ await openRealPerson(record);
 }
 function monthKey(){return `${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,'0')}`}
 function renderCalendar(){updatePlannerHours();const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate(),start=(new Date(year,m,1).getDay()+6)%7,rows=6;$('monthLabel').textContent=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month);const visibleStart=weekly?weekIndex*7:0,visibleEnd=weekly?(weekIndex+1)*7:rows*7;let html='';for(let i=visibleStart;i<visibleEnd;i++){const d=i-start+1,valid=d>=1&&d<=days,cellDate=new Date(year,m,d),date=`${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}-${String(cellDate.getDate()).padStart(2,'0')}`,weekday=i%7,dayText=new Intl.DateTimeFormat('tr-TR',{weekday:'long'}).format(cellDate);let slots='';if(valid){getShifts(date).forEach((sh,j)=>{slots+=`<div class="shift-group"><button class="btn ghost shiftEdit" data-date="${date}" style="padding:3px 5px;font-size:10px;width:100%;text-align:left">✎ ${escapeHtml(sh.start)}–${escapeHtml(sh.end)} · ${sh.count} kişi</button>`;for(let seat=0;seat<sh.count;seat++){const k=date+'|'+j+'|'+seat,p=plannerPeople.find(x=>x.id===draft[k]);slots+=`<div class="slot ${p?'filled':''} ${p&&personColor(p.id)?'person-tinted':''}" ${p&&personColor(p.id)?'style="--person-color:'+personColor(p.id)+'"':''} data-slot="${k}" title="${p?'Tıkla: atamayı kaldır':'Personel sürükleyip bırak'}">${p?'◉ '+escapeHtml(p.name):'+ Personel Ata / Seç'}<small>${seat+1}. kontenjan</small></div>`}slots+='</div>'})}else{slots=`<div class="adjacent-info">${getShifts(date).map(sh=>`<div class="adjacent-shift">◈ ${escapeHtml(sh.start)}–${escapeHtml(sh.end)} · ${sh.count} kişi</div>`).join('')}<button type="button" class="btn ghost adjacent-open" data-month="${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}">Bu aya git ↗</button></div>`}const special=calendarSpecialDay(date);html+=`<div class="day ${valid?'':'adjacent-month'} ${special&&special[1]?'special-holiday':''}" data-date="${date}"><div class="dayhead"><b>${`${cellDate.getDate()} ${new Intl.DateTimeFormat('tr-TR',{month:'long'}).format(cellDate)} ${cellDate.getFullYear()}`}</b><span class="${weekday>=5?'weekend':''}">${dayText}</span>${special?`<span class="special-label">${escapeHtml(special[0])}</span>`:''}</div>${slots}</div>`}$('calendar').innerHTML=html;document.querySelectorAll('.adjacent-open').forEach(b=>b.onclick=()=>{const [y,m]=b.dataset.month.split('-').map(Number);month=new Date(y,m-1,1);weekIndex=0;remoteLoadSequence++;remoteLoadPending=true;remoteProgram={status:'published'};loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()});document.querySelectorAll('.shiftEdit').forEach(b=>b.onclick=()=>openShiftConfig(b.dataset.date));document.querySelectorAll('.day:not(.adjacent-month)[data-date]').forEach(day=>{day.addEventListener('dragover',e=>{e.preventDefault();day.classList.add('over')});day.addEventListener('dragleave',()=>day.classList.remove('over'));day.addEventListener('drop',e=>{e.preventDefault();day.classList.remove('over');const id=e.dataTransfer.getData('text/plain');if(!plannerPeople.some(p=>p.id===id))return;const slot=e.target.closest('.slot')||day.querySelector('.slot:not(.filled)');if(!slot)return;assignToSlot(id,slot.dataset.slot)})});document.querySelectorAll('.slot:not(.filled)').forEach(slot=>slot.onclick=()=>{const key=slot.dataset.slot;const options=plannerPeople.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');modal('Vardiyaya Personel Ata',`<p class="sub">${escapeHtml(key.split('|')[0])} · Personel seçerek atama yapabilirsiniz.</p><div class="field"><label>Personel</label><select id="quickAssignPerson"><option value="">Personel seçin</option>${options}</select></div><button class="btn primary" id="quickAssignBtn">Atamayı Yap</button>`);$('quickAssignBtn').onclick=()=>{const id=$('quickAssignPerson').value;if(!id){alert('Personel seçin.');return}const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}closeModal();assignToSlot(id,key)}});document.querySelectorAll('.slot.filled').forEach(s=>s.onclick=()=>{if(remoteProgram?.status==='published'){alert('Yayınlanmış program değiştirilemez.');return}if(confirm('Geçici atamayı kaldıralım mı?')){delete draft[s.dataset.slot];persistDraft();renderCalendar()}})}
@@ -1215,18 +1221,18 @@ await restoreSession();
 // PAKET: kisi renkleri (kurum+personel), resmi gun basliklari ve hizli vardiya yonetimi
 const personnelColors=new Map();
 const PERSON_PALETTE=['#e87979','#f59e0b','#eab308','#22c55e','#14b8a6','#38bdf8','#818cf8','#c084fc','#f472b6','#94a3b8','#fb923c','#4ade80'];
-function personColor(id){return personnelColors.get(id)||''}
+function personColor(id){return personnelColors.get(String(id))||''}
 async function refreshPersonnelColors(){
  personnelColors.clear();if(!selectedInstitutionId||!client)return;
  const {data,error}=await client.from('personnel_display_colors').select('user_id,color').eq('institution_id',selectedInstitutionId);
  if(error){console.warn('Renk tablosu kullanilamiyor; SQL kurulumu gerekli.',error.message);return}
- (data||[]).forEach(r=>{if(/^#[0-9a-f]{6}$/i.test(r.color))personnelColors.set(r.user_id,r.color)});
+ (data||[]).forEach(r=>{if(/^#[0-9a-f]{6}$/i.test(r.color))personnelColors.set(String(r.user_id),r.color)});
  if(typeof renderPeople==='function')renderPeople();if(typeof renderCalendar==='function')renderCalendar();
 }
 async function savePersonnelColor(id,color){
  if(!/^#[0-9a-f]{6}$/i.test(color))throw Error('Gecersiz renk');
  const {error}=await client.rpc('np_save_personnel_color',{p_institution_id:selectedInstitutionId,p_user_id:id,p_color:color});
- if(error)throw error;personnelColors.set(id,color);renderPeople();renderCalendar();
+ if(error)throw error;personnelColors.set(String(id),color);renderPeople();renderCalendar();
 }
 function colorChooserMarkup(id){return `<div class="field"><label>Personel Takvim Rengi</label><input id="personDisplayColor" type="color" value="${personColor(id)||'#38bdf8'}"><p class="sub">Renk yalnız görünümü değiştirir. Aynı renk başka personelde kullanılabilir.</p></div>`}
 function addColorChooserToPerson(){
