@@ -101,12 +101,13 @@ body.light:has(#loginView:not(.hidden)){
 .day .special-label{font-size:11px;font-weight:750;line-height:1.35;color:var(--accent2)}
 .day.special-holiday .special-label{color:#ffb39b}body.light .day.special-holiday .special-label{color:#8c321e}
 /* Yalnız personel havuzu kartları ve atanmış nöbet kartlarının renk görünümü. */
-.slot.filled.person-tinted{border:2px solid var(--person-color)!important;border-left:7px solid var(--person-color)!important;background:color-mix(in srgb,var(--person-color) 32%,var(--panel))!important;color:var(--text)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--person-color) 25%,transparent)}
-.slot.filled.person-tinted small{color:var(--text)!important;opacity:.85}
-.person.person-tinted{border:2px solid var(--person-color)!important;border-left:8px solid var(--person-color)!important;background:color-mix(in srgb,var(--person-color) 24%,var(--panel2))!important;color:var(--text)!important}
-.person.person-tinted small{color:var(--text)!important;opacity:.85}
-body.light .slot.filled.person-tinted{background:color-mix(in srgb,var(--person-color) 25%,#fff)!important}
-body.light .person.person-tinted{background:color-mix(in srgb,var(--person-color) 18%,#fff)!important}
+/* Personel rengi yalnız kutunun iç dolgusuna uygulanır; kenarlıklar varsayılan kalır. */
+.slot.filled.person-tinted{background:color-mix(in srgb,var(--person-color) 62%,var(--panel))!important;color:var(--text)!important}
+.slot.filled.person-tinted small{color:var(--text)!important;opacity:.9}
+.person.person-tinted{background:color-mix(in srgb,var(--person-color) 62%,var(--panel2))!important;color:var(--text)!important}
+.person.person-tinted small{color:var(--text)!important;opacity:.9}
+body.light .slot.filled.person-tinted{background:color-mix(in srgb,var(--person-color) 62%,#fff)!important}
+body.light .person.person-tinted{background:color-mix(in srgb,var(--person-color) 62%,#fff)!important}
 .availability-slot{display:block;width:100%;padding:5px 1px;margin:3px 0;border-radius:6px;border:1px solid #4c9877;background:#c9f5dc;color:#154b32;font-size:11px;font-weight:800;cursor:pointer}
 .availability-slot.blocked{border-color:#b45454;background:#ffe0e0;color:#792929}
 .month-edge{margin:12px 0;text-align:center;padding:12px;border-top:1px solid var(--border)}
@@ -507,10 +508,11 @@ async function loadPlannerPeople(){
   // Havuz, Personeller ekranının aynı aktif üyelik/profil kayıtlarından üretilir.
   plannerPeople=records.filter(m=>m.is_active===true&&m.profile?.is_active===true&&['personnel','authorized','manager'].includes(m.role)).map(m=>({id:m.user_id,name:((m.profile.first_name||'')+' '+(m.profile.last_name||'')).trim()||'İsimsiz personel',unit:({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[m.role]||m.role,membership:m,profile:m.profile}));
   // Renklerin tek kaynağı da Personeller bölümünde kaydedilen kurum/personel renkleridir.
-  const cr=await client.rpc('np_read_personnel_colors',{p_institution_id:institutionId});
+  const cr=await readPersonnelColorRows(institutionId);
   if(seq!==plannerLoadSequence||institutionId!==selectedInstitutionId)return;
-  if(!cr.error){personnelColors.clear();(cr.data||[]).forEach(x=>{if(/^#[0-9a-f]{6}$/i.test(x.color))personnelColors.set(String(x.user_id),x.color)})}
-  else console.warn('Personel renkleri yüklenemedi:',cr.error.message);
+  personnelColors.clear();
+  cr.rows.forEach(x=>{if(/^#[0-9a-f]{6}$/i.test(x.color||''))personnelColors.set(String(x.user_id),x.color)});
+  if(cr.rpcError&&cr.tableError)console.warn('Personel renkleri yüklenemedi:',cr.rpcError.message,cr.tableError.message);
   const monthStart=monthKey()+'-01',monthEnd=monthKey()+'-'+String(new Date(month.getFullYear(),month.getMonth()+1,0).getDate()).padStart(2,'0');
   const [limitsRes,blocksRes,leavesRes]=await Promise.all([
     client.from('personnel_limits').select('user_id,weekly_max,monthly_max').eq('institution_id',institutionId),
@@ -1222,21 +1224,35 @@ await restoreSession();
 const personnelColors=new Map();
 const PERSON_PALETTE=['#e87979','#f59e0b','#eab308','#22c55e','#14b8a6','#38bdf8','#818cf8','#c084fc','#f472b6','#94a3b8','#fb923c','#4ade80'];
 function personColor(id){return personnelColors.get(String(id))||''}
+async function readPersonnelColorRows(institutionId){
+ // Güvenli RPC birincil kaynaktır; tablo okuması yalnızca yetkili oturumun
+ // mevcut RLS izinleriyle yapılır. İzinler hiçbir şekilde aşılmaz.
+ const rpc=await client.rpc('np_read_personnel_colors',{p_institution_id:institutionId});
+ if(!rpc.error&&Array.isArray(rpc.data)&&rpc.data.length)return {rows:rpc.data,source:'rpc'};
+ const table=await client.from('personnel_display_colors').select('user_id,color').eq('institution_id',institutionId);
+ if(!table.error&&Array.isArray(table.data)&&table.data.length)return {rows:table.data,source:'table'};
+ return {rows:Array.isArray(rpc.data)?rpc.data:[],source:'rpc',rpcError:rpc.error,tableError:table.error};
+}
 async function refreshPersonnelColors(){
- personnelColors.clear();if(!selectedInstitutionId||!client)return;
- const {data,error}=await client.rpc('np_read_personnel_colors',{p_institution_id:selectedInstitutionId});
- if(error){console.warn('Renk tablosu kullanilamiyor; SQL kurulumu gerekli.',error.message);return}
- (data||[]).forEach(r=>{if(/^#[0-9a-f]{6}$/i.test(r.color))personnelColors.set(String(r.user_id),r.color)});
+ if(!selectedInstitutionId||!client){personnelColors.clear();return}
+ const institutionId=selectedInstitutionId;
+ const result=await readPersonnelColorRows(institutionId);
+ if(institutionId!==selectedInstitutionId)return;
+ if(result.rpcError&&result.tableError)console.warn('Personel renkleri okunamadı',result.rpcError,result.tableError);
+ personnelColors.clear();
+ result.rows.forEach(r=>{if(/^#[0-9a-f]{6}$/i.test(r.color||''))personnelColors.set(String(r.user_id),r.color)});
  if(typeof renderPeople==='function')renderPeople();if(typeof renderCalendar==='function')renderCalendar();
 }
 async function savePersonnelColor(id,color){
- if(!/^#[0-9a-f]{6}$/i.test(color))throw Error('Gecersiz renk');
- const {error}=await client.rpc('np_save_personnel_color',{p_institution_id:selectedInstitutionId,p_user_id:id,p_color:color});
- if(error)throw error;
- // RPC'nin hata vermemesi, kaydın okunabildiği anlamına gelmez.
- const check=await client.rpc('np_read_personnel_colors',{p_institution_id:selectedInstitutionId});
- if(check.error)throw new Error('Renk kaydı doğrulanamadı: '+check.error.message);
- if(!Array.isArray(check.data)||!check.data.some(r=>String(r.user_id)===String(id)&&String(r.color).toLowerCase()===color.toLowerCase()))throw new Error('Renk güvenli okuma fonksiyonundan geri alınamadı. SQL kurulumunun yapıldığından ve oturumun aktif olduğundan emin olun.');
+ if(!/^#[0-9a-f]{6}$/i.test(color))throw Error('Geçersiz renk');
+ const institutionId=selectedInstitutionId;
+ const {error}=await client.rpc('np_save_personnel_color',{p_institution_id:institutionId,p_user_id:id,p_color:color});
+ if(error)throw new Error('Renk kaydı başarısız: '+error.message);
+ const result=await readPersonnelColorRows(institutionId);
+ const found=result.rows.find(r=>String(r.user_id)===String(id));
+ if(!found)throw new Error('Renk kaydı doğrulanamadı: kurum/personel için okunabilir renk kaydı bulunamadı. Kaydetme fonksiyonunun tabloya yazdığını ve okuma yetkilerini kontrol edin.'+(result.rpcError?' RPC: '+result.rpcError.message:'')+(result.tableError?' Tablo: '+result.tableError.message:''));
+ if(String(found.color).toLowerCase()!==color.toLowerCase())throw new Error('Renk kaydı doğrulanamadı: Sunucu seçilen renk yerine '+String(found.color)+' döndürüyor. Kaydetme fonksiyonunun UPDATE/UPSERT işlemi incelenmeli.');
+ if(institutionId!==selectedInstitutionId)return;
  personnelColors.set(String(id),color);renderPeople();renderCalendar();
 }
 function colorChooserMarkup(id){return `<div class="field"><label>Personel Takvim Rengi</label><input id="personDisplayColor" type="color" value="${personColor(id)||'#38bdf8'}"><p class="sub">Renk yalnız görünümü değiştirir. Aynı renk başka personelde kullanılabilir.</p></div>`}
