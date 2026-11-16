@@ -100,9 +100,13 @@ body.light:has(#loginView:not(.hidden)){
 .day.special-holiday .dayhead{border-bottom-color:#e3a18a}
 .day .special-label{font-size:11px;font-weight:750;line-height:1.35;color:var(--accent2)}
 .day.special-holiday .special-label{color:#ffb39b}body.light .day.special-holiday .special-label{color:#8c321e}
-.slot.filled.person-tinted{border:2px solid var(--person-color)!important;border-left:7px solid var(--person-color)!important;background:color-mix(in srgb,var(--person-color) 42%,var(--panel))!important;color:var(--text)!important}
-.slot.filled.person-tinted small{color:var(--text)!important}
-.person.person-tinted{border-left:8px solid var(--person-color)!important;background:color-mix(in srgb,var(--person-color) 20%,var(--panel2))!important}
+/* Yalnız personel havuzu kartları ve atanmış nöbet kartlarının renk görünümü. */
+.slot.filled.person-tinted{border:2px solid var(--person-color)!important;border-left:7px solid var(--person-color)!important;background:color-mix(in srgb,var(--person-color) 32%,var(--panel))!important;color:var(--text)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--person-color) 25%,transparent)}
+.slot.filled.person-tinted small{color:var(--text)!important;opacity:.85}
+.person.person-tinted{border:2px solid var(--person-color)!important;border-left:8px solid var(--person-color)!important;background:color-mix(in srgb,var(--person-color) 24%,var(--panel2))!important;color:var(--text)!important}
+.person.person-tinted small{color:var(--text)!important;opacity:.85}
+body.light .slot.filled.person-tinted{background:color-mix(in srgb,var(--person-color) 25%,#fff)!important}
+body.light .person.person-tinted{background:color-mix(in srgb,var(--person-color) 18%,#fff)!important}
 .availability-slot{display:block;width:100%;padding:5px 1px;margin:3px 0;border-radius:6px;border:1px solid #4c9877;background:#c9f5dc;color:#154b32;font-size:11px;font-weight:800;cursor:pointer}
 .availability-slot.blocked{border-color:#b45454;background:#ffe0e0;color:#792929}
 .month-edge{margin:12px 0;text-align:center;padding:12px;border-top:1px solid var(--border)}
