@@ -584,7 +584,7 @@ async function loadPublishedSwap(){
     for(const p of plannerPeople.filter(p=>p.id!==row.id)){const opt=document.createElement('option');opt.value=p.id;opt.textContent=p.name;sel.append(opt)}
     const reason=document.createElement('select');reason.style.maxWidth='220px';
     for(const [value,label] of [['','Değişiklik nedeni'],['Sağlık raporu','Sağlık raporu'],['Yıllık izin','Yıllık izin'],['Mazeret izni','Mazeret izni'],['Acil durum','Acil durum'],['Diğer','Diğer']]){const opt=document.createElement('option');opt.value=value;opt.textContent=label;reason.append(opt)}
-    const detail=document.createElement('textarea');detail.placeholder='Açıklama (isteğe bağlı, en fazla 293 karakter)';detail.maxLength=293;detail.rows=2;detail.style.width='100%';detail.style.marginTop='8px';detail.style.display='none';detail.setAttribute('aria-label','Diğer nedeni için isteğe bağlı açıklama');
+    const detail=document.createElement('textarea');detail.placeholder='İsterseniz kısa bir açıklama yazın…';detail.maxLength=293;detail.rows=2;detail.style.cssText='display:none;width:min(100%,520px);min-height:76px;max-height:180px;margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:11px;background:var(--input);color:var(--text);font:inherit;font-size:14px;line-height:1.5;outline:none;resize:vertical;box-sizing:border-box;';detail.setAttribute('aria-label','Diğer nedeni için isteğe bağlı açıklama');
     reason.onchange=()=>{detail.style.display=reason.value==='Diğer'?'block':'none';if(reason.value!=='Diğer')detail.value=''};
     const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Nöbeti Değiştir';
     button.onclick=async()=>{
