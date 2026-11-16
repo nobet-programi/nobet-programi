@@ -663,7 +663,7 @@ async function exportShiftPuantaj(settings,personUnitMap){
  ws.pageSetup={paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.2,right:.2,top:.35,bottom:.35,header:.1,footer:.1}};
  ws.printOptions={horizontalCentered:true};ws.headerFooter.oddFooter='Sayfa &P / &N';
  const buffer=await wb.xlsx.writeBuffer();const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
- const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='vardiyali-kurum-puantaj-'+key+'.xlsx';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+ const url=globalThis.URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='vardiyali-kurum-puantaj-'+key+'.xlsx';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>globalThis.URL.revokeObjectURL(url),2000);
 }
 new MutationObserver(updateShiftExcelVisibility).observe($('selectedInstitutionLabel'),{childList:true,subtree:true,characterData:true});
 // Excel önizleme ayarları yalnızca dışa aktarmaya uygulanır; kurum/birim kayıtlarını değiştirmez.
