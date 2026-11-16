@@ -70,6 +70,18 @@ body.light .shift-group .slot.filled{background:#e6f4ee;color:#1e3b36;border-sty
 #loginView .login-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);border:1px solid var(--border);border-radius:8px;background:var(--panel2);color:var(--text);font-size:12px;font-weight:650;padding:7px 10px;cursor:pointer}
 #loginView .login-password-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:480px){#loginView{margin:5vh auto}}
+
+/* TEST58: Yalnızca giriş ekranında silik altın geometrik arka plan. */
+body:has(#loginView:not(.hidden)){
+ background-image:
+  linear-gradient(90deg, color-mix(in srgb,var(--bg) 82%,transparent),color-mix(in srgb,var(--bg) 73%,transparent)),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Cg fill='none' stroke='%23d7ad60' stroke-width='1.1' opacity='.28'%3E%3Cpath d='M-80 90L220 -45 610 150 980 -20M-80 440L240 280 530 425 970 205M-80 700L220 550 560 720 970 490'/%3E%3Cpath d='M100 -30L380 170 210 400 520 600 850 400M640 -50L480 170 800 360 620 730'/%3E%3Cpath d='M100 90L220 150 100 210 -20 150ZM660 450L800 520 660 590 520 520Z'/%3E%3C/g%3E%3Cg fill='%23d7ad60' opacity='.25'%3E%3Ccircle cx='220' cy='150' r='4'/%3E%3Ccircle cx='520' cy='520' r='4'/%3E%3Ccircle cx='800' cy='360' r='4'/%3E%3C/g%3E%3C/svg%3E"),
+  radial-gradient(ellipse at top right,color-mix(in srgb,var(--accent) 12%,transparent),transparent 45%);
+ background-color:var(--bg);
+ background-position:center,center,center;
+ background-size:cover,cover,cover;
+ background-attachment:fixed;
+}
 </style>
 </head>
 <body>
