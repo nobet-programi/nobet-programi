@@ -507,7 +507,7 @@ async function loadPlannerPeople(){
   // Havuz, Personeller ekranının aynı aktif üyelik/profil kayıtlarından üretilir.
   plannerPeople=records.filter(m=>m.is_active===true&&m.profile?.is_active===true&&['personnel','authorized','manager'].includes(m.role)).map(m=>({id:m.user_id,name:((m.profile.first_name||'')+' '+(m.profile.last_name||'')).trim()||'İsimsiz personel',unit:({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[m.role]||m.role,membership:m,profile:m.profile}));
   // Renklerin tek kaynağı da Personeller bölümünde kaydedilen kurum/personel renkleridir.
-  const cr=await client.from('personnel_display_colors').select('user_id,color').eq('institution_id',institutionId);
+  const cr=await client.rpc('np_read_personnel_colors',{p_institution_id:institutionId});
   if(seq!==plannerLoadSequence||institutionId!==selectedInstitutionId)return;
   if(!cr.error){personnelColors.clear();(cr.data||[]).forEach(x=>{if(/^#[0-9a-f]{6}$/i.test(x.color))personnelColors.set(String(x.user_id),x.color)})}
   else console.warn('Personel renkleri yüklenemedi:',cr.error.message);
@@ -1224,7 +1224,7 @@ const PERSON_PALETTE=['#e87979','#f59e0b','#eab308','#22c55e','#14b8a6','#38bdf8
 function personColor(id){return personnelColors.get(String(id))||''}
 async function refreshPersonnelColors(){
  personnelColors.clear();if(!selectedInstitutionId||!client)return;
- const {data,error}=await client.from('personnel_display_colors').select('user_id,color').eq('institution_id',selectedInstitutionId);
+ const {data,error}=await client.rpc('np_read_personnel_colors',{p_institution_id:selectedInstitutionId});
  if(error){console.warn('Renk tablosu kullanilamiyor; SQL kurulumu gerekli.',error.message);return}
  (data||[]).forEach(r=>{if(/^#[0-9a-f]{6}$/i.test(r.color))personnelColors.set(String(r.user_id),r.color)});
  if(typeof renderPeople==='function')renderPeople();if(typeof renderCalendar==='function')renderCalendar();
@@ -1234,9 +1234,9 @@ async function savePersonnelColor(id,color){
  const {error}=await client.rpc('np_save_personnel_color',{p_institution_id:selectedInstitutionId,p_user_id:id,p_color:color});
  if(error)throw error;
  // RPC'nin hata vermemesi, kaydın okunabildiği anlamına gelmez.
- const check=await client.from('personnel_display_colors').select('color').eq('institution_id',selectedInstitutionId).eq('user_id',id).maybeSingle();
+ const check=await client.rpc('np_read_personnel_colors',{p_institution_id:selectedInstitutionId});
  if(check.error)throw new Error('Renk kaydı doğrulanamadı: '+check.error.message);
- if(!check.data||String(check.data.color).toLowerCase()!==color.toLowerCase())throw new Error('Renk veritabanından geri okunamadı. Supabase renk tablosunun kayıt/okuma yetkilerini ve np_save_personnel_color fonksiyonunu kontrol edin.');
+ if(!Array.isArray(check.data)||!check.data.some(r=>String(r.user_id)===String(id)&&String(r.color).toLowerCase()===color.toLowerCase()))throw new Error('Renk güvenli okuma fonksiyonundan geri alınamadı. SQL kurulumunun yapıldığından ve oturumun aktif olduğundan emin olun.');
  personnelColors.set(String(id),color);renderPeople();renderCalendar();
 }
 function colorChooserMarkup(id){return `<div class="field"><label>Personel Takvim Rengi</label><input id="personDisplayColor" type="color" value="${personColor(id)||'#38bdf8'}"><p class="sub">Renk yalnız görünümü değiştirir. Aynı renk başka personelde kullanılabilir.</p></div>`}
