@@ -584,14 +584,17 @@ async function loadPublishedSwap(){
     for(const p of plannerPeople.filter(p=>p.id!==row.id)){const opt=document.createElement('option');opt.value=p.id;opt.textContent=p.name;sel.append(opt)}
     const reason=document.createElement('select');reason.style.maxWidth='220px';
     for(const [value,label] of [['','Değişiklik nedeni'],['Sağlık raporu','Sağlık raporu'],['Yıllık izin','Yıllık izin'],['Mazeret izni','Mazeret izni'],['Acil durum','Acil durum'],['Diğer','Diğer']]){const opt=document.createElement('option');opt.value=value;opt.textContent=label;reason.append(opt)}
+    const detail=document.createElement('textarea');detail.placeholder='Açıklama (isteğe bağlı, en fazla 293 karakter)';detail.maxLength=293;detail.rows=2;detail.style.width='100%';detail.style.marginTop='8px';detail.style.display='none';detail.setAttribute('aria-label','Diğer nedeni için isteğe bağlı açıklama');
+    reason.onchange=()=>{detail.style.display=reason.value==='Diğer'?'block':'none';if(reason.value!=='Diğer')detail.value=''};
     const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Nöbeti Değiştir';
     button.onclick=async()=>{
      if(!sel.value||!reason.value){alert('Yeni personeli ve değişiklik nedenini seçin.');return}
      const chosen=plannerPeople.find(p=>p.id===sel.value);
+     const fullReason=reason.value==='Diğer'&&detail.value.trim()?('Diğer: '+detail.value.trim()):reason.value;
      if(!confirm(row.date+' '+row.shift.start+'–'+row.shift.end+' nöbeti '+(names.get(row.id)||'eski personel')+' yerine '+(chosen?.name||'yeni personel')+' kişisine aktarılsın mı?\nNeden: '+reason.value+'\nBu işlem yayımlanmış programı günceller ve geçmişe kaydedilir.'))return;
      button.disabled=true;
      try{
-      const {error}=await client.rpc('change_published_duty_assignment',{p_institution:inst,p_month:key,p_assignment_key:row.key,p_expected_user:row.id,p_new_user:sel.value,p_reason:reason.value});
+      const {error}=await client.rpc('change_published_duty_assignment',{p_institution:inst,p_month:key,p_assignment_key:row.key,p_expected_user:row.id,p_new_user:sel.value,p_reason:fullReason});
       if(error)throw error;
       alert('Nöbet değiştirildi ve işlem geçmişine kaydedildi.');
       await loadPublishedSwap();
@@ -599,7 +602,7 @@ async function loadPublishedSwap(){
      }catch(e){alert('Nöbet değiştirilemedi: '+programErrorText(e))}
      finally{button.disabled=false}
     };
-    controls.append(sel,reason,button);card.append(controls);
+    controls.append(sel,reason,button);card.append(controls,detail);
    }
    root.append(card);
   }
