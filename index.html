@@ -630,24 +630,44 @@ async function exportShiftPuantaj(settings,personUnitMap){
  }
  let col=2;for(const g of groups){g.first=col;g.width=Math.max(1,g.width);col+=g.width}
  const leaveStart=col,totalCols=col+3;
- const wb=new ExcelJS.Workbook();wb.creator='NÖBET PROGRAMI';wb.created=new Date();const ws=wb.addWorksheet('Aylık Puantaj',{views:[{state:'frozen',xSplit:1,ySplit:7}]});
+ const wb=new ExcelJS.Workbook();wb.creator='NÖBET PROGRAMI';wb.created=new Date();const ws=wb.addWorksheet('Aylık Puantaj',{views:[{state:'frozen',xSplit:1,ySplit:11}]});
  ws.properties.defaultRowHeight=21;
+ ws.getRow(1).height=22;ws.getRow(2).height=22;ws.getRow(3).height=22;ws.getRow(4).height=22;
+ // Kurum logosu yalnızca seçili kurumun kayıtlı HTTPS adresinden alınır.
+ // Resim erişilemiyorsa veya Excel tarafından desteklenmiyorsa puantaj indirmesi devam eder.
+ try{
+  const institution=institutions.find(x=>String(x.id)===String(selectedInstitutionId));
+  let logoUrl=institution?.logo_url;
+  if(!logoUrl&&client){const r=await client.from('institutions').select('logo_url').eq('id',selectedInstitutionId).maybeSingle();if(!r.error)logoUrl=r.data?.logo_url}
+  if(logoUrl&&/^https:\/\//i.test(logoUrl)){
+   const response=await fetch(logoUrl,{mode:'cors'});
+   if(!response.ok)throw new Error('Logo erişilemedi');
+   const blob=await response.blob();
+   if(blob.size>5*1024*1024)throw new Error('Logo 5 MB sınırını aşıyor');
+   let ext=blob.type==='image/png'?'png':blob.type==='image/jpeg'?'jpeg':null;
+   if(!ext)throw new Error('Excel için PNG veya JPEG logo gerekiyor');
+   const imageId=wb.addImage({buffer:await blob.arrayBuffer(),extension:ext});
+   const logoWidth=Math.min(180,Math.max(80,totalCols*15));
+   ws.addImage(imageId,{tl:{col:(totalCols-logoWidth/110)/2,row:0.15},ext:{width:logoWidth,height:75},editAs:'oneCell'});
+  }
+ }catch(err){console.warn('Excel logosu eklenemedi; puantaj logosuz hazırlanacak:',err)}
+
  ws.getColumn(1).width=17;for(let c=2;c<=totalCols;c++)ws.getColumn(c).width=c>=leaveStart+1?17:17;
  const dark='10243F',gold='F5C66A',light='DDE8F5',border={style:'thin',color:{argb:'FF23374D'}};
  function paint(cell,fill,fg='10243F',bold=false,size=10){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+fill}};cell.font={name:'Arial',size,bold,color:{argb:'FF'+fg}};cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};cell.border={top:border,bottom:border,left:border,right:border}}
  function band(row,label,fill,fg='FFFFFF',size=11){ws.mergeCells(row,1,row,totalCols);const c=ws.getCell(row,1);c.value=label;paint(c,fill,fg,true,size);ws.getRow(row).height=row===1?34:25}
- band(1,settings.title||'AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ',dark,'FFFFFF',16);
- band(2,'KURUM ADI: '+settings.center,'203B60');
- band(3,'BİRİM ADI: '+settings.unitName,'203B60');
- band(4,'DÖNEM: '+settings.period,'203B60');
- ws.getRow(5).height=12;
- ws.mergeCells(6,1,7,1);ws.getCell(6,1).value=settings.hoursTitle||'ÇALIŞMA SAAT ARALIĞI';paint(ws.getCell(6,1),'B8CCE4',dark,true,9);
- for(const g of groups){const first=g.first+1,last=g.first+g.width; if(g.width>1)ws.mergeCells(6,first,6,last);ws.getCell(6,first).value=g.shiftLabel;paint(ws.getCell(6,first),'F9D65C',dark,true,10);for(let j=0;j<g.width;j++){const c=ws.getCell(7,first+j);c.value=g.width>1?'PERSONEL '+(j+1):g.shiftLabel;paint(c,'D8E5F4',dark,true,9)}}
- ['YILLIK İZİN','RAPOR','MAZERET İZNİ'].forEach((h,i)=>{const c=leaveStart+i+1;ws.mergeCells(6,c,7,c);ws.getCell(6,c).value=h;paint(ws.getCell(6,c),i===0?'F9D65C':'C9E8D3',dark,true,9)});
- ws.getRow(6).height=29;ws.getRow(7).height=25;
+ band(5,settings.title||'AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ',dark,'FFFFFF',16);
+ band(6,'KURUM ADI: '+settings.center,'203B60');
+ band(7,'BİRİM ADI: '+settings.unitName,'203B60');
+ band(8,'DÖNEM: '+settings.period,'203B60');
+ ws.getRow(9).height=12;
+ ws.mergeCells(10,1,11,1);ws.getCell(10,1).value=settings.hoursTitle||'ÇALIŞMA SAAT ARALIĞI';paint(ws.getCell(10,1),'B8CCE4',dark,true,9);
+ for(const g of groups){const first=g.first+1,last=g.first+g.width; if(g.width>1)ws.mergeCells(10,first,10,last);ws.getCell(10,first).value=g.shiftLabel;paint(ws.getCell(10,first),'F9D65C',dark,true,10);for(let j=0;j<g.width;j++){const c=ws.getCell(11,first+j);c.value=g.width>1?'PERSONEL '+(j+1):g.shiftLabel;paint(c,'D8E5F4',dark,true,9)}}
+ ['YILLIK İZİN','RAPOR','MAZERET İZNİ'].forEach((h,i)=>{const c=leaveStart+i+1;ws.mergeCells(10,c,11,c);ws.getCell(10,c).value=h;paint(ws.getCell(10,c),i===0?'F9D65C':'C9E8D3',dark,true,9)});
+ ws.getRow(10).height=29;ws.getRow(11).height=25;
  const weekdays=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
  for(let d=1;d<=days;d++){
-  const date=key+'-'+String(d).padStart(2,'0'),dt=new Date(year,mon,d),row=7+d,weekend=[0,6].includes(dt.getDay());ws.getRow(row).height=30;
+  const date=key+'-'+String(d).padStart(2,'0'),dt=new Date(year,mon,d),row=11+d,weekend=[0,6].includes(dt.getDay());ws.getRow(row).height=30;
   for(let c=1;c<=totalCols;c++)paint(ws.getCell(row,c),weekend?'B9E9F8':'FFFFFF',dark,false,9);
   const dateCell=ws.getCell(row,1);dateCell.value=dt;dateCell.numFmt='dd.mm.yyyy';dateCell.font={name:'Arial',bold:true,size:10,color:{argb:'FF'+dark}};
   const daily=getShifts(date);
