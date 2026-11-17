@@ -427,8 +427,7 @@ async function loadPersonnel(){
  if(!personnelRecords.length){$('personnelMsg').textContent='Henüz personel eklenmedi.';return}
  $('personnelMsg').textContent=personnelRecords.length+' kayıt listelendi.';
  for(const p of personnelRecords){const b=document.createElement('button');b.className='institution-card';b.type='button';const name=document.createElement('strong');name.textContent=((p.profile?.first_name||'')+' '+(p.profile?.last_name||'')).trim()||'Profil bulunamadı';name.setAttribute('data-personnel-color-id',p.user_id);name.style.color=personnelNameColor(p.user_id);name.style.fontWeight='800';const role=document.createElement('small');role.textContent=({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[p.role]||p.role;const detail=document.createElement('small');detail.textContent=(p.is_active===false||p.profile?.is_active===false?'⏸ Pasif · ':'✓ Aktif · ')+'Bilgiler, izinler ve çalışma sınırları';b.append(name,role,detail);b.onclick=()=>openRealPerson(p);
-  const wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:stretch;gap:8px;margin-bottom:8px';b.style.flex='1';wrap.append(b);
-  list.append(wrap)}
+  b.style.marginBottom='8px';list.append(b)}
 }
 
 // Yönetici şifre sıfırlama: yalnız güvenli Edge Function üzerinden; service_role tarayıcıya gönderilmez.
@@ -447,7 +446,7 @@ function openManagerPasswordReset(person){
    const {data,error}=await client.functions.invoke('reset-person-password',{body:{institution_id:selectedInstitutionId,user_id:person.user_id,password}});
    if(error)throw error;if(!data?.success)throw new Error(data?.error||'İşlem tamamlanamadı.');
    form.reset();notify('resetPersonMessage','Personelin şifresi güncellendi. Yeni şifreyi kendisine güvenli şekilde iletin.','ok');
-  }catch(err){console.error('Şifre sıfırlama hatası',err);notify('resetPersonMessage','Şifre sıfırlanamadı. Güvenli sunucu işlevinin kurulu ve yetkilerin doğru olduğundan emin olun.','error')}
+  }catch(err){console.error('Şifre sıfırlama hatası',err);notify('resetPersonMessage','Şifre sıfırlanamadı: '+(err?.context?.status===401?'Oturum doğrulanamadı. Yeniden giriş yapın.':err?.message||'Sunucu işlevini ve yetkileri kontrol edin.'),'error')}
   finally{button.disabled=false}
  };
 }
@@ -501,10 +500,10 @@ async function openRealPerson(p){
  const fullName=((p.profile?.first_name||'')+' '+(p.profile?.last_name||'')).trim();
  modal('Personel · '+fullName,`<div class="tabs"><button class="btn active" id="tabDuty">Nöbet Bilgileri</button><button class="btn" id="tabInfo">Personel Bilgileri</button><button class="btn" id="tabLeave">İzin Bilgileri</button></div><div id="personResetAction" class="flex hidden" style="margin:10px 0"><button class="btn ghost" id="personResetPasswordBtn" type="button">🔑 Şifre Sıfırla</button></div><div id="personTab"></div><div id="personError" class="notice hidden" role="status"></div>`);
  $('tabDuty').onclick=renderDutyTab;$('tabInfo').onclick=renderInfoTab;$('tabLeave').onclick=renderLeaveTab;
- if((isAdmin||canManageSelectedInstitution)&&p.is_active!==false){$('personResetAction').classList.remove('hidden');$('personResetPasswordBtn').onclick=()=>openManagerPasswordReset(p)}
+ if(canManageSelectedInstitution&&p.is_active!==false&&p.profile?.is_active!==false){$('personResetAction').classList.remove('hidden');$('personResetPasswordBtn').onclick=()=>openManagerPasswordReset(p)}
  await renderDutyTab();
 }
-function activatePersonTab(id){document.querySelectorAll('#tabDuty,#tabInfo,#tabLeave').forEach(b=>b.classList.toggle('active',b.id===(id==='tabLimits'||id==='tabOff'?'tabInfo':id)));$('personError').classList.add('hidden')}
+function activatePersonTab(id){const resetAction=$('personResetAction');if(resetAction)resetAction.classList.toggle('hidden',id!=='tabInfo'||!canManageSelectedInstitution||activePerson?.is_active===false||activePerson?.profile?.is_active===false);document.querySelectorAll('#tabDuty,#tabInfo,#tabLeave').forEach(b=>b.classList.toggle('active',b.id===(id==='tabLimits'||id==='tabOff'?'tabInfo':id)));$('personError').classList.add('hidden')}
 function infoSubnav(active){return `<div class="tabs" style="margin:0 0 16px;gap:8px"><button type="button" class="btn ${active==='details'?'active':''}" id="subDetails">Genel Bilgiler</button><button type="button" class="btn ${active==='limits'?'active':''}" id="subLimits">Çalışma Sınırları</button><button type="button" class="btn ${active==='off'?'active':''}" id="subOff">Gün / Saat Kapatma</button></div>`}
 function wireInfoSubnav(){if($('subDetails'))$('subDetails').onclick=renderInfoTab;if($('subLimits'))$('subLimits').onclick=renderLimitTab;if($('subOff'))$('subOff').onclick=loadOffMonth}
 function friendlyError(context,error){console.error(context,error);notify('personError','İşlem tamamlanamadı. Lütfen yeniden deneyin.','error')}
@@ -513,10 +512,12 @@ async function renderDutyTab(){
  const now=new Date(),m=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
  const rows=selectedInstitutionId?await client.from('duty_programs').select('month_key,status,payload').eq('institution_id',selectedInstitutionId).order('month_key',{ascending:false}).limit(12):{data:[]};
  if(rows.error){el.textContent='Nöbet bilgileri şu anda yüklenemiyor.';return}
- const found=[];for(const prog of rows.data||[]){const shifts=prog.payload?.shifts||{},assignments=prog.payload?.assignments||{};for(const [key,id] of Object.entries(assignments)){if(id!==activePerson.user_id)continue;const [date,index]=key.split('|'),shift=(shifts[date]||[{start:'08:00',end:'16:00'},{start:'16:00',end:'00:00'}])[Number(index)];if(!shift)continue;const [a,b]=[shift.start,shift.end].map(t=>{const [h,min]=t.split(':').map(Number);return h*60+min});found.push({date,time:shift.start+'–'+shift.end,hours:((b-a+1440)%1440||1440)/60,status:prog.status})}}
+ const found=[];for(const prog of rows.data||[]){const shifts=prog.payload?.shifts||{},assignments=prog.payload?.assignments||{};for(const [key,id] of Object.entries(assignments)){if(id!==activePerson.user_id)continue;const [date,index]=key.split('|'),shift=(shifts[date]||[{start:'08:00',end:'16:00'},{start:'16:00',end:'00:00'}])[Number(index)];if(!shift)continue;const [a,b]=[shift.start,shift.end].map(t=>{const [h,min]=t.split(':').map(Number);return h*60+min});found.push({date,time:shift.start+'–'+shift.end,shift,hours:((b-a+1440)%1440||1440)/60,status:prog.status})}}
  const monthRows=found.filter(x=>x.date.startsWith(m)),total=found.reduce((a,x)=>a+x.hours,0);
+ const nightTotal=found.reduce((a,x)=>a+nightHoursForShift(x),0);
+ const holidayCount=found.filter(x=>calendarSpecialDay(x.date)?.[1]).length;
  const dayCounts=[0,0,0,0,0,0,0];for(const x of found){dayCounts[(new Date(x.date+'T12:00:00').getDay()+6)%7]++}
- el.innerHTML=`<div class="detail-grid"><div>Bu ay nöbet<b>${monthRows.length}</b></div><div>Son 12 ay nöbet<b>${found.length}</b></div><div>Son 12 ay toplam saat<b>${total.toLocaleString('tr-TR')} saat</b></div><div>Bu ay toplam saat<b>${monthRows.reduce((a,x)=>a+x.hours,0).toLocaleString('tr-TR')} saat</b></div></div><p class="sub" style="margin-top:12px">Pzt ${dayCounts[0]} · Sal ${dayCounts[1]} · Çar ${dayCounts[2]} · Per ${dayCounts[3]} · Cum ${dayCounts[4]} · Cmt ${dayCounts[5]} · Paz ${dayCounts[6]}</p><div style="max-height:240px;overflow:auto">${found.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="notice">${escapeHtml(x.date)} · ${escapeHtml(x.time)} · ${x.hours} saat · ${x.status==='published'?'Yayınlandı':'Taslak'}</div>`).join('')||'<p class="sub">Kayıtlı nöbet bulunamadı.</p>'}</div><p class="sub">Bu özet erişilebilir son 12 aylık kayıtları kapsar; resmî tatil ve kesin gece saatleri henüz hesaplanmaz.</p>`;
+ el.innerHTML=`<div class="detail-grid"><div>Bu ay nöbet<b>${monthRows.length}</b></div><div>Son 12 ay nöbet<b>${found.length}</b></div><div>Son 12 ay toplam saat<b>${total.toLocaleString('tr-TR')} saat</b></div><div>Bu ay toplam saat<b>${monthRows.reduce((a,x)=>a+x.hours,0).toLocaleString('tr-TR')} saat</b></div></div><p class="sub" style="margin-top:12px">Pzt ${dayCounts[0]} · Sal ${dayCounts[1]} · Çar ${dayCounts[2]} · Per ${dayCounts[3]} · Cum ${dayCounts[4]} · Cmt ${dayCounts[5]} · Paz ${dayCounts[6]}</p><div style="max-height:240px;overflow:auto">${found.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="notice">${escapeHtml(x.date)} · ${escapeHtml(x.time)} · ${x.hours} saat · ${x.status==='published'?'Yayınlandı':'Taslak'}</div>`).join('')||'<p class="sub">Kayıtlı nöbet bulunamadı.</p>'}</div><p class="sub">Gece saati (22.00–06.00): <b>${nightTotal.toLocaleString('tr-TR',{maximumFractionDigits:2})} saat</b> · Başlangıç günü resmî tatil/bayram olan nöbet: <b>${holidayCount}</b></p><p class="sub">Bu özet erişilebilir son 12 program kaydını kapsar. Gece saatleri vardiyanın gece yarısını aşması dikkate alınarak hesaplanır. Tatil sayımı nöbetin başladığı güne göredir; dinî bayramlar yalnız doğrulanmış 2026 tarihleri için tanımlıdır.</p>`;
 }
 async function renderInfoTab(){
  activatePersonTab('tabInfo');$('personTab').innerHTML='<p class="sub">Personel bilgileri yükleniyor…</p>';
