@@ -234,8 +234,14 @@ async function loadManagerCenter(){
  const {data:members,error:me}=await client.from('institution_memberships').select('institution_id,role,is_active').eq('user_id',user.id).eq('role','manager').eq('is_active',true);if(me)throw me;
  const ids=(members||[]).map(x=>x.institution_id);if(!ids.length&&!isAdmin){status.textContent='Aktif kurum yöneticisi yetkiniz bulunmuyor.';return}
  const {data:orgs,error:oe}=await client.from('institutions').select('id,name,is_active').in('id',isAdmin?(institutions.length?institutions.map(x=>x.id):ids):ids);if(oe)throw oe;
- status.textContent=(orgs||[]).length+' erişilebilir kurum.';
- for(const o of orgs||[]){list.append(centerCard(o.name,o.is_active?'Kurum aktif · Personeller ve nöbetler':'Kurum pasif',()=>{selectCenterInstitution(o);navigate('home')}))}
+ const visibleIds=new Set((orgs||[]).map(o=>String(o.id)));
+ const missingIds=[...new Set(ids.map(String))].filter(id=>!visibleIds.has(id));
+ if(missingIds.length){
+  status.textContent=(orgs||[]).length+' erişilebilir kurum. '+missingIds.length+' yetkili kurumun bilgileri okunamadı. Kurum kaydı veya Supabase institutions SELECT/RLS politikasını Ana Yönetici kontrol etmeli.';
+ }else{
+  status.textContent=(orgs||[]).length+' erişilebilir kurum.';
+ }
+ for(const o of orgs||[]){list.append(centerCard(o.name,o.is_active?'Kurum aktif · Personeller ve nöbetler':'Kurum pasif',()=>{selectCenterInstitution(o);navigate('home'}))}
  }catch(e){console.error('Kurum paneli',e);status.textContent='Kurumlar okunamadı. Yetki ve bağlantıyı kontrol edin.'}
 }
 async function openManagerLanding(){
