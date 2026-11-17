@@ -802,6 +802,37 @@ async function loadDraftModule(kind){
  }catch(e){context.textContent='Bilgiler şu anda yüklenemiyor.'}
 }
 // TEST57 / Aşama 1: yayınlanmış nöbetleri yalnızca okur; veritabanına yazmaz.
+// Yedek önerileri yalnızca yöneticiye sunulur; kayıt işlemi mevcut güvenli RPC üzerinden yapılır.
+function substituteShiftWindow(row){
+ const mins=t=>{const a=String(t||'').split(':').map(Number);return a.length===2&&a.every(Number.isFinite)?a[0]*60+a[1]:NaN};
+ const start=mins(row.shift?.start),end=mins(row.shift?.end);
+ if(!Number.isFinite(start)||!Number.isFinite(end))return null;
+ const day=Date.parse(row.date+'T00:00:00Z');return [day+start*60000,day+(end<=start?end+1440:end)*60000];
+}
+function substituteWeekStart(date){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);return d.toISOString().slice(0,10)}
+function recommendSubstitutes(target,rows){
+ const tw=substituteShiftWindow(target);if(!tw)return [];
+ const week=substituteWeekStart(target.date), candidates=[];
+ for(const p of plannerPeople){
+  if(p.id===target.id)continue;
+  const own=rows.filter(r=>r.id===p.id), limit=plannerLimits.get(p.id)||{};
+  // Bitiş günü de izin kapsamında olabilir: gece yarısını aşan vardiyaları kontrol et.
+  const endDate=new Date(tw[1]-1).toISOString().slice(0,10);
+  if(plannerLeaveBlocks.has(p.id+'|'+target.date)||plannerLeaveBlocks.has(p.id+'|'+endDate))continue;
+  if(plannerBlocks.has(p.id+'|'+target.date+'|'+target.index))continue;
+  if(own.some(r=>{const w=substituteShiftWindow(r);return w&&tw[0]<w[1]&&w[0]<tw[1]}))continue;
+  const monthHours=own.reduce((a,r)=>a+r.hours,0), weekHours=own.filter(r=>substituteWeekStart(r.date)===week).reduce((a,r)=>a+r.hours,0);
+  if(limit.monthly_max!=null&&monthHours+target.hours>Number(limit.monthly_max))continue;
+  if(limit.weekly_max!=null&&weekHours+target.hours>Number(limit.weekly_max))continue;
+  const nightCount=own.filter(r=>nightHoursForShift(r)>0).length;
+  const weekendCount=own.filter(r=>[0,6].includes(new Date(r.date+'T12:00:00Z').getUTCDay())).length;
+  const holidayCount=own.filter(r=>calendarSpecialDay(r.date)?.[1]).length;
+  // Daha az toplam saat ve daha az ağır nöbet yükü önceliklidir.
+  const score=monthHours+nightCount*4+weekendCount*2+holidayCount*3;
+  candidates.push({person:p,monthHours,weekHours,nightCount,weekendCount,holidayCount,score});
+ }
+ return candidates.sort((a,b)=>a.score-b.score||a.person.name.localeCompare(b.person.name,'tr')).slice(0,8);
+}
 let publishedSwapSeq=0;
 async function loadPublishedSwap(){
  const seq=++publishedSwapSeq, inst=selectedInstitutionId, key=monthKey();
@@ -848,7 +879,15 @@ async function loadPublishedSwap(){
      }catch(e){alert('Nöbet değiştirilemedi: '+programErrorText(e))}
      finally{button.disabled=false}
     };
-    controls.append(sel,reason,button);card.append(controls,detail);
+    const suggest=document.createElement('button');suggest.type='button';suggest.className='btn ghost';suggest.textContent='✨ Yedek Öner';
+    const suggestions=document.createElement('div');suggestions.className='notice hidden';suggestions.style.cssText='margin-top:10px;max-width:100%;';
+    suggest.onclick=()=>{
+     if(!suggestions.classList.contains('hidden')){suggestions.classList.add('hidden');return}
+     const candidates=recommendSubstitutes(row,rows);suggestions.replaceChildren();suggestions.classList.remove('hidden');
+     const info=document.createElement('p');info.className='sub';info.textContent=candidates.length?'Uygun adaylar (düşük nöbet yükü önce). Seçim yapıldığında yalnızca personel alanı doldurulur.':'Bu nöbet için uygun yedek bulunamadı. İzin, çakışma ve saat sınırlarını kontrol edin.';suggestions.append(info);
+     for(const c of candidates){const choice=document.createElement('button');choice.type='button';choice.className='btn ghost';choice.style.cssText='display:block;text-align:left;width:100%;margin:6px 0;white-space:normal;';choice.textContent=c.person.name+' · Bu ay '+c.monthHours.toLocaleString('tr-TR')+' saat · Bu hafta '+c.weekHours.toLocaleString('tr-TR')+' saat · Gece '+c.nightCount+' · Hafta sonu '+c.weekendCount+' · Tatil '+c.holidayCount;choice.onclick=()=>{sel.value=c.person.id;suggestions.classList.add('hidden')};suggestions.append(choice)}
+    };
+    controls.append(sel,reason,suggest,button);card.append(controls,detail,suggestions);
    }
    root.append(card);
   }
