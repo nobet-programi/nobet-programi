@@ -145,7 +145,7 @@ body.light:has(#loginView:not(.hidden)){
   <span id="programStatus" class="tag">Yerel taslak</span>
 </div>
 <div class="planner"><aside class="panel"><h3 style="margin-top:0">Personel Havuzu</h3><p class="sub">Kartın tamamından sürükle. Tıklarsan detay açılır.</p><div class="people" id="peoplePool"></div><div id="plannerHours" class="statusline"></div><div id="plannerPeopleMsg" class="statusline" role="status"></div></aside><div class="panel calendar-scroll"><div class="weeknames"><span>Pazartesi</span><span>Salı</span><span>Çarşamba</span><span>Perşembe</span><span>Cuma</span><span>Cumartesi</span><span>Pazar</span></div><div id="calendar" class="cal"></div><div class="month-edge" id="calendarNextMonth"><button class="btn" id="scrollNextMonth">Sonraki Ayı Aç ↓</button></div></div></div></div>
-<div id="swapPage" class="hidden panel"><h2>Nöbet Değiştir</h2><p class="sub">Yayımlanmış nöbetlerde acil izin, rapor veya mazeret nedeniyle personel değiştirilebilir. Her değişiklik neden ve önceki atama bilgisiyle kaydedilir. Geçici taslak işlemleri korunur.</p><div id="publishedSwapList"></div><h3>Geçici Taslak Atamaları</h3><div id="swapContext" class="statusline"></div><div id="swapList"></div></div>
+<div id="swapPage" class="hidden panel"><h2>Nöbet Değiştir</h2><p class="sub">Yayımlanmış nöbetlerde acil izin, rapor veya mazeret nedeniyle personel değiştirilebilir. Her değişiklik neden ve önceki atama bilgisiyle kaydedilir. Taslak atamalar Nöbet Hazırla ekranından yönetilir.</p><div id="publishedSwapList"></div><div id="swapContext" class="statusline hidden"></div><div id="swapList" class="hidden"></div></div>
 <div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçilen kurumun yayınlanmış programlarını hesaplar. Tatil saatleri adalet raporunda vardiya saatlerine göre ayrıca hesaplanır.</p><div class="flex" style="margin:12px 0;align-items:end;gap:10px;flex-wrap:wrap">
 <label>Dönem <select id="fairnessPeriod"><option value="month">Seçili ay</option><option value="3">Son 3 ay</option><option value="12">Son 12 ay</option><option value="all">Tüm yayınlanmış geçmiş</option><option value="custom">Özel tarih aralığı</option></select></label>
 <label>Başlangıç <input type="date" id="fairnessFrom" disabled></label>
@@ -805,7 +805,7 @@ async function loadDraftModule(kind){
   plannerBlocks=new Set((blk.data||[]).map(x=>x.user_id+'|'+x.blocked_date+'|'+x.shift_index));plannerLeaveBlocks=new Set();for(const leave of leaves.data||[]){for(let d=new Date(leave.start_date+'T12:00:00');d<=new Date(leave.end_date+'T12:00:00');d.setDate(d.getDate()+1)){plannerLeaveBlocks.add(leave.user_id+'|'+[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'))}}
   loadLocalDraft();
   context.textContent='Kurum: '+institutionName()+' · Ay: '+new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month)+' · Yalnızca geçici taslak';
-  if(kind==='swap'){renderDraftSwap();await loadPublishedSwap()}else await loadPublishedFairness();
+  if(kind==='swap'){await loadPublishedSwap()}else await loadPublishedFairness();
  }catch(e){context.textContent='Bilgiler şu anda yüklenemiyor.'}
 }
 // TEST57 / Aşama 1: yayınlanmış nöbetleri yalnızca okur; veritabanına yazmaz.
@@ -861,7 +861,7 @@ async function loadPublishedSwap(){
    const title=document.createElement('strong');title.textContent=row.date+' · '+row.shift.start+'–'+row.shift.end+' · '+(names.get(row.id)||'Personel kaydı bulunamadı ('+String(row.id).slice(0,8)+')');
    const note=document.createElement('p');note.className='sub';note.textContent='Yayımlanmış nöbet';
    card.append(title,note);
-   if(isAdmin){
+   if(isAdmin||canManageSelectedInstitution){
     const controls=document.createElement('div');controls.className='flex';controls.style.marginTop='10px';
     const sel=document.createElement('select');sel.style.maxWidth='300px';
     const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Yerine geçecek personel';sel.append(placeholder);
@@ -872,6 +872,7 @@ async function loadPublishedSwap(){
     reason.onchange=()=>{detail.style.display=reason.value==='Diğer'?'block':'none';if(reason.value!=='Diğer')detail.value=''};
     const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Nöbeti Değiştir';
     button.onclick=async()=>{
+     if(!canManageSelectedInstitution){alert('Bu kurumda yönetici yetkiniz doğrulanamadı.');return}
      if(!sel.value||!reason.value){alert('Yeni personeli ve değişiklik nedenini seçin.');return}
      const chosen=plannerPeople.find(p=>p.id===sel.value);
      const fullReason=reason.value==='Diğer'&&detail.value.trim()?('Diğer: '+detail.value.trim()):reason.value;
@@ -1128,10 +1129,16 @@ function updateProgramControls(){
  $('publishBtn').disabled=remoteLoadPending||!canManageSelectedInstitution||!selectedInstitutionId||!['draft','editing'].includes(remoteProgram?.status);
  $('publishBtn').textContent=editing?'↗ Yeniden Yayınla':'↗ Yayınla';
  $('beginEditBtn').textContent=editing?'✎ Düzenleme Açık':'✎ Düzenle';
- $('versionsBtn').disabled=!canManageSelectedInstitution||!selectedInstitutionId;
- $('autoBtn').disabled=remoteLoadPending||published;
- $('resetDemo').disabled=remoteLoadPending||published;
- $('shiftConfigBtn').disabled=remoteLoadPending||published;
+ const toolsAllowed=canManageSelectedInstitution&&!!selectedInstitutionId;
+ $('versionsBtn').disabled=!toolsAllowed||remoteLoadPending;
+ $('deletedProgramsBtn').disabled=!toolsAllowed||remoteLoadPending;
+ $('deletePublishedBtn').disabled=!toolsAllowed||remoteLoadPending;
+ $('printProgram').disabled=!toolsAllowed||remoteLoadPending;
+ $('exportDraft').disabled=!toolsAllowed||remoteLoadPending;
+ $('exportShiftExcel').disabled=!toolsAllowed||remoteLoadPending;
+ $('autoBtn').disabled=!toolsAllowed||remoteLoadPending||published;
+ $('resetDemo').disabled=!toolsAllowed||remoteLoadPending||published;
+ $('shiftConfigBtn').disabled=!toolsAllowed||remoteLoadPending||published;
  $('programStatus').textContent=remoteLoadPending?'Sunucu kontrol ediliyor…':editing?'DÜZENLEME TASLAĞI':published?'YAYINLANDI':remoteProgram?.status==='draft'?'Veritabanında taslak':'Yerel taslak';
 }
 // Sunucudaki yayın ve düzenleme taslağı iki ayrı kayıttır; yayın asla taslak olarak kaydedilmez.
@@ -1301,7 +1308,7 @@ function resetPlannerAfterServerChange(institution,ym){
 }
 $('deletePublishedBtn').onclick=async()=>{
  closePlannerTools();
- if(!isAdmin||!client||!selectedInstitutionId){alert('Bu işlem için Ana Yönetici yetkisi ve seçili kurum gerekli.');return}
+ if(!canManageSelectedInstitution||!client||!selectedInstitutionId){alert('Bu kurum için yönetici yetkisi ve kurum seçimi gerekli.');return}
  if(remoteLoadPending){alert('Program durumu yükleniyor.');return}
  const institution=selectedInstitutionId,ym=monthKey(),name=institutionName();
  // Ekrandaki taslak durumu yayın olmadığını göstermez; sunucudan son kez kontrol et.
@@ -1327,7 +1334,7 @@ $('deletePublishedBtn').onclick=async()=>{
 };
 $('deletedProgramsBtn').onclick=async()=>{
  closePlannerTools();
- if(!isAdmin||!client||!selectedInstitutionId){alert('Silinen programları görüntülemek için Ana Yönetici yetkisi ve kurum seçimi gerekir.');return}
+ if(!canManageSelectedInstitution||!client||!selectedInstitutionId){alert('Silinen programları görüntülemek için bu kurumda yönetici yetkisi gerekir.');return}
  const institution=selectedInstitutionId;
  modal('Silinen Programlar',`<p class="sub">${escapeHtml(institutionName())} · Yedekler sunucuda korunur. Geri yükleme, aynı kurum ve ayda yeni program varsa engellenir.</p><div id="deletedProgramsMessage" class="statusline">Yedekler yükleniyor…</div><div id="deletedProgramsList" style="display:grid;gap:10px;max-height:55vh;overflow:auto"></div>`);
  const root=$('deletedProgramsList'),msg=$('deletedProgramsMessage');
@@ -1368,7 +1375,7 @@ $('deletedProgramsBtn').onclick=async()=>{
   };
   const restore=document.createElement('button');restore.className='btn primary';restore.textContent='↶ Geri Yükle';
   restore.onclick=async()=>{
-   if(!isAdmin){alert('Yönetici yetkisi gerekli.');return}
+   if(!canManageSelectedInstitution||selectedInstitutionId!==b.institution_id){alert('Bu kurum için yönetici yetkisi gerekli.');return}
    const check=await client.from('duty_programs').select('id,status').eq('institution_id',b.institution_id).eq('month_key',b.month_key).maybeSingle();
    if(check.error){alert('Mevcut program kontrol edilemedi: '+programErrorText(check.error));return}
    if(check.data){alert('Bu kurum ve ayda zaten program var. Geri yükleme mevcut programın üzerine yazamaz.');return}
@@ -1388,6 +1395,7 @@ $('deletedProgramsBtn').onclick=async()=>{
   const permanent=document.createElement('button');permanent.className='btn';permanent.textContent='🗑 Kalıcı Sil';
   permanent.style.borderColor='#b91c1c';permanent.style.color='#dc2626';
   permanent.onclick=async()=>{
+   if(!canManageSelectedInstitution||selectedInstitutionId!==b.institution_id){alert('Bu kurum için yönetici yetkisi gerekli.');return}
    if(!client){
     alert('Güvenli bağlantı kurulamadı. Lütfen yeniden giriş yapın.');return;
    }
