@@ -1211,9 +1211,25 @@ function renderPublishedFairness(){
   const totals={hours:totalHours,nightHours:active.reduce((sum,p)=>sum+p.nightHours,0),weekend:active.reduce((sum,p)=>sum+p.saturday+p.sunday,0)};
   const intro=document.createElement('p');intro.className='sub';intro.textContent='Nöbet tutan '+active.length+' personel · Kişi başına ortalama '+fmt(average)+' saat · En yüksek ve en düşük saat farkı '+fmt(Math.max(...active.map(p=>p.hours))-Math.min(...active.map(p=>p.hours)))+' saat';compare.append(intro);
   const wrapper=document.createElement('div');wrapper.style.overflowX='auto';const table=document.createElement('table');table.style.cssText='width:100%;min-width:790px;border-collapse:collapse';
-  const headers=['Personel','Toplam saat','Ortalamadan fark','Gece saati','Gece nöbeti','Cumartesi','Pazar','Hafta sonu toplamı'];
+  const headers=['Personel','Toplam saat','Ortalamadan fark','Gündüz saati (06–22)','Gece saati (22–06)','Gece nöbeti','Cumartesi','Pazar','Hafta sonu toplamı'];
   const htr=document.createElement('tr');headers.forEach(t=>{const th=document.createElement('th');th.textContent=t;th.style.cssText='text-align:left;padding:9px;border-bottom:1px solid #74879a';htr.append(th)});table.append(htr);
-  for(const person of active){const tr=document.createElement('tr');const delta=person.hours-average;const values=[person.name,fmt(person.hours), (delta>0?'+':'')+fmt(delta)+' saat',fmt(person.nightHours),person.night,person.saturday,person.sunday,person.saturday+person.sunday];values.forEach((v,i)=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:9px;border-bottom:1px solid #40546b';if(i===2)td.style.fontWeight='bold';tr.append(td)});table.append(tr)}wrapper.append(table);compare.append(wrapper);
+  for(const person of active){const tr=document.createElement('tr');const delta=person.hours-average;const values=[person.name,fmt(person.hours), (delta>0?'+':'')+fmt(delta)+' saat',fmt(person.hours-person.nightHours),fmt(person.nightHours),person.night,person.saturday,person.sunday,person.saturday+person.sunday];values.forEach((v,i)=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:9px;border-bottom:1px solid #40546b';if(i===2)td.style.fontWeight='bold';tr.append(td)});table.append(tr)}wrapper.append(table);compare.append(wrapper);
+  // Personel bazında gündüz/gece karşılaştırması: mevcut tablo ve kişi detayları korunur.
+  const dnTitle=document.createElement('strong');dnTitle.textContent='Personel bazında gündüz / gece saat karşılaştırması';dnTitle.style.cssText='display:block;margin:20px 0 10px';compare.append(dnTitle);
+  const dnLegend=document.createElement('p');dnLegend.className='sub';dnLegend.textContent='Turkuaz: gündüz (06.00–22.00) · Mor: gece (22.00–06.00). Çubuk uzunluğu toplam çalışılan saate göredir.';compare.append(dnLegend);
+  const dnMax=Math.max(1,...active.map(p=>p.hours));
+  for(const person of active){
+   const line=document.createElement('div');line.style.cssText='margin:12px 0';
+   const label=document.createElement('div');label.style.cssText='display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;margin-bottom:5px';
+   const name=document.createElement('b');name.textContent=person.name;
+   const values=document.createElement('span');values.textContent='Gündüz '+fmt(person.hours-person.nightHours)+' sa. · Gece '+fmt(person.nightHours)+' sa. · Toplam '+fmt(person.hours)+' sa.';
+   label.append(name,values);
+   const track=document.createElement('div');track.style.cssText='height:15px;border-radius:8px;background:rgba(128,150,175,.23);overflow:hidden;display:flex';
+   for(const [hours,color] of [[Math.max(0,person.hours-person.nightHours),'#36b5ac'],[Math.max(0,person.nightHours),'#818cf8']]){
+    const bar=document.createElement('div');bar.style.cssText='height:100%;width:'+Math.min(100,hours/dnMax*100)+'%;background:'+color;track.append(bar)
+   }
+   line.append(label,track);compare.append(line)
+  }
   const warning=document.createElement('p');warning.className='sub';warning.textContent='Ortalamadan fark yalnızca betimleyici bir göstergedir; kişisel çalışma hedefleri ve izinler hesaba katılmadan adaletsizlik kararı verilemez.';compare.append(warning);
  }
  root.append(compare);
