@@ -117,7 +117,7 @@ body.light:has(#loginView:not(.hidden)){
 <header class="top"><div class="brand"><span class="logo">▦</span><div><strong>NÖBET PROGRAMI</strong><small>Okul ve Vardiyalı Kurum Yönetim Sistemi</small></div></div><div class="top-actions"><button class="btn ghost" id="themeBtn" title="Tema değiştir">☀ Açık Tema</button><button class="btn ghost hidden" id="logoutBtn">Çıkış</button></div></header>
 <main class="wrap">
 <section id="loginView" class="panel login"><div class="logo">♛</div><h1>Yönetici Girişi</h1><p class="sub">Güvenli giriş ile kurumunuzu ve nöbetlerinizi yönetin.</p><form id="loginForm"><div class="field"><label for="email">E-posta</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label for="password">Şifre</label><div class="login-password-wrap"><input id="password" type="password" autocomplete="current-password" required><button type="button" id="loginPasswordToggle" class="login-password-toggle" aria-label="Şifreyi göster" aria-pressed="false" title="Şifreyi göster">Göster</button></div></div><button class="btn primary" style="width:100%" type="submit">Giriş Yap</button></form><div id="loginMsg" class="notice hidden"></div></section>
-<section id="appView" class="hidden"><div class="hero"><div><h1 id="pageTitle">Yönetim Paneli</h1><div class="sub" id="userLabel">NÖBET PROGRAMI</div></div><div class="flex"><span class="tag" id="roleLabel">Yetki doğrulanıyor</span><button class="btn hidden" id="backToInstitutionsBtn">← Geri Dön</button><button class="btn hidden" id="adminCenterBtn">♛ Ana Yönetici</button><button class="btn hidden" id="managerCenterBtn">⚙ Kurum Paneli</button><button class="btn hidden" id="homeBtn">⌂ Ana Sayfa</button><button class="btn hidden" id="changeMyPasswordBtn" type="button">🔐 Şifremi Değiştir</button></div></div>
+<section id="appView" class="hidden"><div class="hero"><div><h1 id="pageTitle">Yönetim Paneli</h1><div class="sub" id="userLabel">NÖBET PROGRAMI</div></div><div class="flex"><span class="tag" id="roleLabel">Yetki doğrulanıyor</span><button class="btn hidden" id="backToInstitutionsBtn">← Geri Dön</button><button class="btn hidden" id="adminCenterBtn">♛ Ana Yönetici</button><button class="btn hidden" id="managerCenterBtn">⚙ Kurum Paneli</button><button class="btn hidden" id="homeBtn">⌂ Ana Sayfa</button></div></div>
 <div id="homePage"><div id="homeInstitutionBrand" class="panel institution-brand"><span id="homeInstitutionFallback" class="institution-brand-fallback">🏢</span><img id="homeInstitutionLogo" class="institution-brand-logo hidden" alt="Kurum logosu"><div><h2 id="homeInstitutionName">Kurum</h2><p class="sub" style="margin:4px 0 0">NÖBET PROGRAMI · Kurum Yönetimi</p></div></div><div class="stats"><div class="stat"><small>Personel</small><b id="homePersonnelCount">—</b><small>Seçili kurumun personeli</small></div><div class="stat"><small>Bu Ay Nöbet</small><b id="homeDutyCount">—</b><small id="homeDutyCaption">Yayınlanan program kontrol ediliyor</small></div></div><div class="flex hidden" style="margin-bottom:16px"><span class="tag" id="selectedInstitutionLabel">Kurum seçilmedi</span></div><div class="tiles"><button class="tile" data-page="people"><span class="emoji">👥</span><strong>Personeller</strong><small>Kullanıcı ekleme ve personel kartları</small></button><button class="tile" data-page="planner"><span class="emoji">🗓️</span><strong>Nöbet Hazırla</strong><small>Aylık / haftalık, sürükle-bırak taslağı</small></button><button class="tile" data-page="swap"><span class="emoji">🔁</span><strong>Nöbet Değiştir</strong><small>Taslak nöbetleri değiştir</small></button><button class="tile" data-page="fairness"><span class="emoji">📊</span><strong>Adalet Raporu</strong><small>Yayınlanmış nöbetler ve adalet analizi</small></button></div></div>
 <div id="adminCenterPage" class="hidden panel"><div class="section-head"><h2>♛ Ana Yönetici · Kurum ve Yönetici Merkezi</h2><div class="flex"><button class="btn primary" id="adminAddInstitutionBtn">+ Kurum Ekle</button><button class="btn" id="adminCenterRefresh">Yenile</button></div></div><p class="sub">Kurumların yöneticilerini, personel sayılarını ve durumlarını görüntüleyin. İşlem yapmak için ilgili kurumu seçin.</p><div id="adminCenterStatus" class="statusline"></div><div id="adminCenterList" class="institution-list"></div></div>
 <div id="managerCenterPage" class="hidden panel"><div class="section-head"><h2>⚙ Kurum Yönetici Paneli</h2><button class="btn" id="managerCenterRefresh">Yenile</button></div><p class="sub">Yalnızca yetkili olduğunuz kurumun yönetim işlemleri. Yönetici ekleme yetkisi sunucu tarafında doğrulanmalıdır.</p><div id="managerCenterStatus" class="statusline"></div><div id="managerCenterList" class="institution-list"></div></div>
@@ -146,7 +146,7 @@ body.light:has(#loginView:not(.hidden)){
 </div>
 <div class="planner"><aside class="panel"><h3 style="margin-top:0">Personel Havuzu</h3><p class="sub">Kartın tamamından sürükle. Tıklarsan detay açılır.</p><div class="people" id="peoplePool"></div><div id="plannerHours" class="statusline"></div><div id="plannerPeopleMsg" class="statusline" role="status"></div></aside><div class="panel calendar-scroll"><div class="weeknames"><span>Pazartesi</span><span>Salı</span><span>Çarşamba</span><span>Perşembe</span><span>Cuma</span><span>Cumartesi</span><span>Pazar</span></div><div id="calendar" class="cal"></div><div class="month-edge" id="calendarNextMonth"><button class="btn" id="scrollNextMonth">Sonraki Ayı Aç ↓</button></div></div></div></div>
 <div id="swapPage" class="hidden panel"><h2>Nöbet Değiştir</h2><p class="sub">Yayımlanmış nöbetlerde acil izin, rapor veya mazeret nedeniyle personel değiştirilebilir. Her değişiklik neden ve önceki atama bilgisiyle kaydedilir. Geçici taslak işlemleri korunur.</p><div id="publishedSwapList"></div><h3>Geçici Taslak Atamaları</h3><div id="swapContext" class="statusline"></div><div id="swapList"></div></div>
-<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçilen kurumun yayınlanmış programlarını hesaplar. Tatil saatleri adalet raporunda vardiya saatlerine göre ayrıca hesaplanır.</p><div class="flex" style="margin:12px 0;align-items:end;gap:10px;flex-wrap:wrap">
+<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçilen kurumun yayınlanmış programlarını hesaplar. Resmî tatil sınıflandırması henüz dahil değildir.</p><div class="flex" style="margin:12px 0;align-items:end;gap:10px;flex-wrap:wrap">
 <label>Dönem <select id="fairnessPeriod"><option value="month">Seçili ay</option><option value="3">Son 3 ay</option><option value="12">Son 12 ay</option><option value="all">Tüm yayınlanmış geçmiş</option><option value="custom">Özel tarih aralığı</option></select></label>
 <label>Başlangıç <input type="date" id="fairnessFrom" disabled></label>
 <label>Bitiş <input type="date" id="fairnessTo" disabled></label>
@@ -169,7 +169,7 @@ const PUBLIC_KEY='sb_publishable_C-huoIk2SWHOo0VsCWaqgQ_eYHNxTMP',themeStorage='
 let plannerPeople=[];let plannerLoadSequence=0;let shiftConfigs={};let plannerLeaveBlocks=new Set();
 let canManageSelectedInstitution=false, permissionCheckSequence=0;let draft={};let remoteProgram=null;let remoteLoadPending=false;let remoteLoadSequence=0;let plannerLimits=new Map();let plannerBlocks=new Set();let downPoint=null;let institutions=[];let selectedInstitutionId=null;
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function setTheme(t){document.body.classList.toggle('light',t==='light');$('themeBtn').textContent=t==='light'?'☾ Koyu Tema':'☀ Açık Tema';localStorage.setItem(themeStorage,t);refreshPersonnelNameColors()}
+function setTheme(t){document.body.classList.toggle('light',t==='light');$('themeBtn').textContent=t==='light'?'☾ Koyu Tema':'☀ Açık Tema';localStorage.setItem(themeStorage,t)}
 setTheme(localStorage.getItem(themeStorage)==='light'?'light':'dark');$('themeBtn').onclick=()=>setTheme(document.body.classList.contains('light')?'dark':'light');
 function notify(id,msg,kind=''){const e=$(id);e.textContent=msg;e.className='notice '+kind;}
 function makeClient(){client=createClient(URL,PUBLIC_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}})}
@@ -188,21 +188,6 @@ $('managerCenterBtn').onclick=()=>navigate('managerCenter');
 $('adminCenterRefresh').onclick=()=>loadAdminCenter();
 $('adminAddInstitutionBtn').onclick=()=>$('addInstitutionBtn').click();
 $('managerCenterRefresh').onclick=()=>loadManagerCenter();
-// Oturum acmis kullanici kendi sifresini Supabase Auth uzerinden degistirir.
-$('changeMyPasswordBtn').onclick=()=>{
- if(!session){alert('Önce giriş yapın.');return}
- modal('Şifremi Değiştir',`<form id="myPasswordForm"><div class="field"><label>Yeni şifre (en az 8 karakter)</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><div class="field"><label>Yeni şifre (tekrar)</label><input name="confirm" type="password" minlength="8" autocomplete="new-password" required></div><button class="btn primary" type="submit">Şifremi Güncelle</button></form><div id="myPasswordMessage" class="notice hidden" role="status"></div>`);
- $('myPasswordForm').onsubmit=async e=>{
-  e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type="submit"]');
-  const values=new FormData(form),password=String(values.get('password')||''),confirmation=String(values.get('confirm')||'');
-  if(password.length<8||password!==confirmation){notify('myPasswordMessage','Şifreler aynı olmalı ve en az 8 karakter içermelidir.','error');return}
-  button.disabled=true;
-  try{const {error}=await client.auth.updateUser({password});if(error)throw error;form.reset();notify('myPasswordMessage','Şifreniz güncellendi.','ok')}
-  catch(error){notify('myPasswordMessage','Şifre değiştirilemedi: '+(error?.message||'Bilinmeyen hata'),'error')}
-  finally{button.disabled=false}
- };
-};
-
 function selectCenterInstitution(o){if(selectedInstitutionId!==o.id){remoteLoadSequence++;remoteProgram=null;remoteLoadPending=false;draft={};plannerPeople=[];plannerLimits.clear();plannerBlocks.clear();plannerLeaveBlocks.clear();plannerLoadSequence++}selectedInstitutionId=o.id;selectedInstitutionName=o.name||'';refreshInstitutionPermission();$('selectedInstitutionLabel').textContent='Kurum: '+o.name;}
 function centerCard(name,detail,onClick){const b=document.createElement('button');b.className='institution-card';b.type='button';const strong=document.createElement('strong');strong.textContent=name;const small=document.createElement('small');small.textContent=detail;b.append(strong,small);b.onclick=onClick;return b}
 async function loadAdminCenter(){
@@ -249,7 +234,7 @@ async function openManagerLanding(){
  }catch(e){console.error('Kurum açılışı',e);navigate('managerCenter');status.textContent='Kurum yetkisi doğrulanamadı. Lütfen yöneticinizle görüşün.'}
 }
 $('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();showLogin()};$('homeBtn').onclick=()=>navigate('home');document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));
-function navigate(page){currentPage=page;$('changeMyPasswordBtn').classList.toggle('hidden',page!=='home');$('adminCenterBtn').classList.add('hidden');$('managerCenterBtn').classList.add('hidden');$('homeBtn').classList.add('hidden');const backButton=$('backToInstitutionsBtn');backButton.classList.toggle('hidden',page==='adminCenter'||page==='managerCenter');backButton.textContent='← Geri Dön';['home','institutions','people','planner','swap','fairness','adminCenter','managerCenter'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='adminCenter'){if(!isAdmin){navigate('home');return}$('adminCenterPage').classList.remove('hidden');$('pageTitle').textContent='Ana Yönetici';loadAdminCenter()}else if(page==='managerCenter'){$('managerCenterPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetici Paneli';loadManagerCenter()}else if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeInstitutionBrand();loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';loadPersonnel()}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
+function navigate(page){currentPage=page;$('adminCenterBtn').classList.add('hidden');$('managerCenterBtn').classList.add('hidden');$('homeBtn').classList.add('hidden');const backButton=$('backToInstitutionsBtn');backButton.classList.toggle('hidden',page==='adminCenter'||page==='managerCenter');backButton.textContent='← Geri Dön';['home','institutions','people','planner','swap','fairness','adminCenter','managerCenter'].forEach(p=>$(p+'Page').classList.add('hidden'));if(page==='adminCenter'){if(!isAdmin){navigate('home');return}$('adminCenterPage').classList.remove('hidden');$('pageTitle').textContent='Ana Yönetici';loadAdminCenter()}else if(page==='managerCenter'){$('managerCenterPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetici Paneli';loadManagerCenter()}else if(page==='home'){$('homePage').classList.remove('hidden');$('pageTitle').textContent='Yönetim Paneli';loadHomeInstitutionBrand();loadHomeStats()}else if(page==='institutions'){$('institutionsPage').classList.remove('hidden');$('pageTitle').textContent='Kurum Yönetimi';loadInstitutions()}else if(page==='people'){$('peoplePage').classList.remove('hidden');$('pageTitle').textContent='Personeller';loadPersonnel()}else if(page==='planner'){$('plannerPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Hazırla';loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()}else if(page==='swap'){$('swapPage').classList.remove('hidden');$('pageTitle').textContent='Nöbet Değiştir';loadDraftModule('swap')}else if(page==='fairness'){$('fairnessPage').classList.remove('hidden');$('pageTitle').textContent='Adalet Raporu';loadDraftModule('fairness')}}
 let homeBrandSequence=0;
 async function loadHomeInstitutionBrand(){
  const seq=++homeBrandSequence, id=selectedInstitutionId;
@@ -302,30 +287,7 @@ async function loadInstitutions(){
 function institutionCountText(n){return n+' kurum listelendi.'}
 function openEditInstitution(inst){
  if(!isAdmin){alert('Kurum düzenleme için Ana Yönetici yetkisi gerekli.');return}
- modal('Kurum Bilgilerini Düzenle',`<form id="editInstitutionForm"><div class="field"><label for="editInstitutionName">Kurum adı</label><input id="editInstitutionName" maxlength="150" required></div><div class="field"><label for="editInstitutionType">Kurum türü</label><select id="editInstitutionType" required><option value="school">Okul</option><option value="shift_organization">Vardiyalı Kurum</option><option value="private_organization">Özel Kurum</option></select></div><div class="field"><label for="editInstitutionLogoFile">Kurum logosu (dosyadan seç)</label><input id="editInstitutionLogoFile" type="file" accept="image/png,image/jpeg,image/webp"><small class="sub">PNG, JPG, WEBP · En fazla 2 MB. Yükleme için Supabase Storage kurulumu gereklidir.</small><div class="logo-preview-wrap"><img id="editInstitutionPreview" class="logo-preview hidden" alt="Kurum logosu önizlemesi"><button class="btn ghost" type="button" id="removeInstitutionLogo">Logoyu Kaldır</button></div></div><div class="field"><label for="editInstitutionActive">Kurum durumu</label><select id="editInstitutionActive"><option value="true">Aktif</option><option value="false">Pasif</option></select></div><button class="btn primary" type="submit">Değişiklikleri Kaydet</button><div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)"><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" type="button" id="deleteInstitutionBtn">🗑 Kurumu Kalıcı Olarak Sil</button><p class="sub">Yalnız Ana Yönetici. İşlem geri alınamaz; kurum ve kuruma bağlı veriler silinir. Diğer kurumlar korunur.</p></div></form><div id="editInstitutionMsg" class="notice hidden" role="status"></div>`);
- $('deleteInstitutionBtn').onclick=async()=>{
-  if(!isAdmin){notify('editInstitutionMsg','Yalnız Ana Yönetici kurum silebilir.','error');return}
-  const exactName=String(inst.name||'').trim();
-  const typed=prompt('DİKKAT: Kurum ve ilişkili kayıtların kalıcı silinmesi geri alınamaz. Onay için kurum adını aynen yazın: '+exactName);
-  if(typed===null)return;
-  if(typed!==exactName){notify('editInstitutionMsg','Kurum adı eşleşmedi. Silme iptal edildi.','error');return}
-  if(!confirm('SON ONAY: '+exactName+' kurumunu ve bağlı verilerini kalıcı silmek istediğinize emin misiniz?'))return;
-  const button=$('deleteInstitutionBtn');button.disabled=true;
-  try{
-   const {data:authorized,error:authError}=await client.rpc('is_platform_admin');
-   if(authError||authorized!==true)throw Error('Ana Yönetici yetkisi doğrulanamadı.');
-   const {data,error}=await client.rpc('delete_institution_completely',{p_institution_id:inst.id,p_confirmation_name:exactName});
-   if(error)throw error;
-   if(data!==true)throw Error('Sunucu silme işlemini doğrulamadı.');
-   if(String(selectedInstitutionId)===String(inst.id)){
-    selectedInstitutionId=null;selectedInstitutionName='';remoteProgram=null;draft={};plannerPeople=[];
-    $('selectedInstitutionLabel').textContent='Kurum seçilmedi';
-   }
-   closeModal();await loadInstitutions();await loadAdminCenter();navigate('adminCenter');
-   alert('Kurum sunucuda silindi. İlişkili kayıtların temizlendiğini ayrıca denetleyin.');
-  }catch(err){console.error('Kurum silme',err);notify('editInstitutionMsg','Silme gerçekleşmedi: '+(err?.message||'Sunucu işlemi başarısız.')+' Güvenli sunucu silme fonksiyonu kurulmuş olmalıdır.','error')}
-  finally{button.disabled=false}
- };
+ modal('Kurum Bilgilerini Düzenle',`<form id="editInstitutionForm"><div class="field"><label for="editInstitutionName">Kurum adı</label><input id="editInstitutionName" maxlength="150" required></div><div class="field"><label for="editInstitutionType">Kurum türü</label><select id="editInstitutionType" required><option value="school">Okul</option><option value="shift_organization">Vardiyalı Kurum</option><option value="private_organization">Özel Kurum</option></select></div><div class="field"><label for="editInstitutionLogoFile">Kurum logosu (dosyadan seç)</label><input id="editInstitutionLogoFile" type="file" accept="image/png,image/jpeg,image/webp"><small class="sub">PNG, JPG, WEBP · En fazla 2 MB. Yükleme için Supabase Storage kurulumu gereklidir.</small><div class="logo-preview-wrap"><img id="editInstitutionPreview" class="logo-preview hidden" alt="Kurum logosu önizlemesi"><button class="btn ghost" type="button" id="removeInstitutionLogo">Logoyu Kaldır</button></div></div><div class="field"><label for="editInstitutionActive">Kurum durumu</label><select id="editInstitutionActive"><option value="true">Aktif</option><option value="false">Pasif</option></select></div><button class="btn primary" type="submit">Değişiklikleri Kaydet</button></form><div id="editInstitutionMsg" class="notice hidden" role="status"></div>`);
  $('editInstitutionName').value=inst.name||'';
  $('editInstitutionType').value=inst.institution_type;$('editInstitutionActive').value=String(inst.is_active!==false);
  let removeLogo=false;let previewObjectUrl=null;
@@ -357,7 +319,7 @@ function openEditInstitution(inst){
    if(!updated)throw Error('Kurum bilgileri güncellenemedi.');
    if(selectedInstitutionId===inst.id)$('selectedInstitutionLabel').textContent='Kurum: '+updated.name;
    closeModal();await loadInstitutions();$('institutionMsg').textContent='Kurum bilgileri güncellendi.';
-  }catch(err){console.error('Kurum güncelleme',err);notify('editInstitutionMsg','Güncelleme başarısız: '+(err?.message||'Bilinmeyen hata'),'error')}finally{btn.disabled=false}
+  }catch(err){notify('editInstitutionMsg','Güncelleme başarısız. Lütfen yeniden deneyin.','error')}finally{btn.disabled=false}
  };
 }
 $('addInstitutionBtn').onclick=()=>{
@@ -400,24 +362,8 @@ async function fetchInstitutionPersonnel(institutionId){
  return members.map(m=>({...m,profile:byId.get(String(m.user_id))}));
 }
 // Personel isim rengi: yalnız kimlikten hesaplanır; veritabanı/SQL gerekmez.
-// Fosforlu ana renkler ilk 10 kişiye, ardından ara tonlar; açık temada yüksek kontrast.
-const PERSON_MAIN_COLORS=[['#ff5555','#b91c1c'],['#60a5fa','#1d4ed8'],['#39ff14','#167a16'],['#faff00','#806000'],['#ff9b35','#a84300'],['#c084fc','#7e22ce'],['#ff64c8','#b31267'],['#00f5d4','#007c70'],['#00d9ff','#006d9a'],['#ff59f7','#a21caf']];
-const PERSON_EXTRA_HUES=[15,195,95,275,345,165,45,225,125,305,5,185,75,255,325,145,35,205,105,285,355,175,55,235,115,295,25,215,135,315,10,190,85,265,335,155,50,230,120,300,0,180,65,245,110,290,30,210,140,320];
-function personnelColorIndex(id){
- const key='nobet-personnel-color-order-v2';let ids=[];
- try{ids=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(ids))ids=[]}catch(_){ids=[]}
- const val=String(id||'');if(!val)return 0;
- let idx=ids.indexOf(val);if(idx<0){idx=ids.length;ids.push(val);try{localStorage.setItem(key,JSON.stringify(ids))}catch(_){}}
- return idx;
-}
-function personnelNameColor(id){
- const idx=personnelColorIndex(id),light=document.body.classList.contains('light');
- if(idx<PERSON_MAIN_COLORS.length)return PERSON_MAIN_COLORS[idx][light?1:0];
- const j=idx-10,hue=PERSON_EXTRA_HUES[j%PERSON_EXTRA_HUES.length];
- const sat=light?78:95,lum=light?(j%3===0?29:34):(j%3===0?64:70);
- return `hsl(${hue} ${sat}% ${lum}%)`;
-}
-function refreshPersonnelNameColors(){document.querySelectorAll('[data-personnel-color-id]').forEach(el=>{el.style.color=personnelNameColor(el.getAttribute('data-personnel-color-id'))})}
+const PERSON_NAME_COLORS=['#991b1b','#9a3412','#854d0e','#166534','#155e75','#1d4ed8','#6b21a8','#9d174d','#115e59','#92400e','#be123c','#7c2d12','#713f12','#365314','#164e63','#1e40af','#5b21b6','#831843','#134e4a','#78350f','#7f1d1d','#7c2d12','#a16207','#14532d','#0e7490','#1e3a8a','#581c87','#701a75','#065f46','#78350f'];
+function personnelNameColor(id){let hash=2166136261;for(const c of String(id||'')){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619)}return PERSON_NAME_COLORS[(hash>>>0)%PERSON_NAME_COLORS.length]}
 async function loadPersonnel(){
  const list=$('realPersonnelList');list.replaceChildren();$('personnelContext').textContent='Seçili kurum: '+institutionName();$('personnelMsg').textContent='';
  if(!selectedInstitutionId){$('personnelMsg').textContent='Önce Kurumları Yönet bölümünden bir kurum seçin.';return}
@@ -426,29 +372,7 @@ async function loadPersonnel(){
  try{personnelRecords=await fetchInstitutionPersonnel(selectedInstitutionId)}catch(err){console.warn('Personel listesi',err);$('personnelMsg').textContent='Personel bilgileri yüklenemedi.';return}
  if(!personnelRecords.length){$('personnelMsg').textContent='Henüz personel eklenmedi.';return}
  $('personnelMsg').textContent=personnelRecords.length+' kayıt listelendi.';
- for(const p of personnelRecords){const b=document.createElement('button');b.className='institution-card';b.type='button';const name=document.createElement('strong');name.textContent=((p.profile?.first_name||'')+' '+(p.profile?.last_name||'')).trim()||'Profil bulunamadı';name.setAttribute('data-personnel-color-id',p.user_id);name.style.color=personnelNameColor(p.user_id);name.style.fontWeight='800';const role=document.createElement('small');role.textContent=({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[p.role]||p.role;const detail=document.createElement('small');detail.textContent=(p.is_active===false||p.profile?.is_active===false?'⏸ Pasif · ':'✓ Aktif · ')+'Bilgiler, izinler ve çalışma sınırları';b.append(name,role,detail);b.onclick=()=>openRealPerson(p);
-  b.style.marginBottom='8px';list.append(b)}
-}
-
-// Yönetici şifre sıfırlama: yalnız güvenli Edge Function üzerinden; service_role tarayıcıya gönderilmez.
-function openManagerPasswordReset(person){
- if(!session||!canManageSelectedInstitution||!selectedInstitutionId){alert('Yönetici yetkisi doğrulanamadı.');return}
- const name=((person.profile?.first_name||'')+' '+(person.profile?.last_name||'')).trim()||'Seçili personel';
- modal('Personel Şifresini Sıfırla',`<p class="sub" id="resetPersonName"></p><form id="resetPersonForm"><div class="field"><label>Yeni şifre (en az 8 karakter)</label><input name="password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></div><button class="btn primary" type="submit">Kaydet</button></form><div id="resetPersonMessage" class="notice hidden" role="status"></div>`);
- $('resetPersonName').textContent=name+' için yeni giriş şifresi belirleyin.';
- $('resetPersonForm').onsubmit=async e=>{
-  e.preventDefault();const form=e.currentTarget,button=form.querySelector('button[type="submit"]');
-  const password=String(new FormData(form).get('password')||'');
-  if(password.length<8){notify('resetPersonMessage','Yeni şifre en az 8 karakter olmalıdır.','error');return}
-  if(!confirm(name+' adlı personelin giriş şifresi değiştirilsin mi?'))return;
-  button.disabled=true;
-  try{
-   const {data,error}=await client.functions.invoke('reset-person-password',{body:{institution_id:selectedInstitutionId,user_id:person.user_id,password}});
-   if(error)throw error;if(!data?.success)throw new Error(data?.error||'İşlem tamamlanamadı.');
-   form.reset();notify('resetPersonMessage','Personelin şifresi güncellendi. Yeni şifreyi kendisine güvenli şekilde iletin.','ok');
-  }catch(err){console.error('Şifre sıfırlama hatası',err);notify('resetPersonMessage','Şifre sıfırlanamadı: '+(err?.context?.status===401?'Oturum doğrulanamadı. Yeniden giriş yapın.':err?.message||'Sunucu işlevini ve yetkileri kontrol edin.'),'error')}
-  finally{button.disabled=false}
- };
+ for(const p of personnelRecords){const b=document.createElement('button');b.className='institution-card';b.type='button';const name=document.createElement('strong');name.textContent=((p.profile?.first_name||'')+' '+(p.profile?.last_name||'')).trim()||'Profil bulunamadı';name.style.color=personnelNameColor(p.user_id);name.style.fontWeight='800';const role=document.createElement('small');role.textContent=({manager:'Kurum Yöneticisi',authorized:'Yetkili',personnel:'Personel'})[p.role]||p.role;const detail=document.createElement('small');detail.textContent=(p.is_active===false||p.profile?.is_active===false?'⏸ Pasif · ':'✓ Aktif · ')+'Bilgiler, izinler ve çalışma sınırları';b.append(name,role,detail);b.onclick=()=>openRealPerson(p);list.append(b)}
 }
  async function fetchUnits(){
   if(!selectedInstitutionId)return [];
@@ -498,12 +422,11 @@ function dateKey(d){return `${offMonth.getFullYear()}-${String(offMonth.getMonth
 async function openRealPerson(p){
  activePerson=p;offMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
  const fullName=((p.profile?.first_name||'')+' '+(p.profile?.last_name||'')).trim();
- modal('Personel · '+fullName,`<div class="tabs"><button class="btn active" id="tabDuty">Nöbet Bilgileri</button><button class="btn" id="tabInfo">Personel Bilgileri</button><button class="btn" id="tabLeave">İzin Bilgileri</button></div><div id="personResetAction" class="flex hidden" style="margin:10px 0"><button class="btn ghost" id="personResetPasswordBtn" type="button">🔑 Şifre Sıfırla</button></div><div id="personTab"></div><div id="personError" class="notice hidden" role="status"></div>`);
+ modal('Personel · '+fullName,`<div class="tabs"><button class="btn active" id="tabDuty">Nöbet Bilgileri</button><button class="btn" id="tabInfo">Personel Bilgileri</button><button class="btn" id="tabLeave">İzin Bilgileri</button></div><div id="personTab"></div><div id="personError" class="notice hidden" role="status"></div>`);
  $('tabDuty').onclick=renderDutyTab;$('tabInfo').onclick=renderInfoTab;$('tabLeave').onclick=renderLeaveTab;
- if(canManageSelectedInstitution&&p.is_active!==false&&p.profile?.is_active!==false){$('personResetAction').classList.remove('hidden');$('personResetPasswordBtn').onclick=()=>openManagerPasswordReset(p)}
  await renderDutyTab();
 }
-function activatePersonTab(id){const resetAction=$('personResetAction');if(resetAction)resetAction.classList.toggle('hidden',id!=='tabInfo'||!canManageSelectedInstitution||activePerson?.is_active===false||activePerson?.profile?.is_active===false);document.querySelectorAll('#tabDuty,#tabInfo,#tabLeave').forEach(b=>b.classList.toggle('active',b.id===(id==='tabLimits'||id==='tabOff'?'tabInfo':id)));$('personError').classList.add('hidden')}
+function activatePersonTab(id){document.querySelectorAll('#tabDuty,#tabInfo,#tabLeave').forEach(b=>b.classList.toggle('active',b.id===(id==='tabLimits'||id==='tabOff'?'tabInfo':id)));$('personError').classList.add('hidden')}
 function infoSubnav(active){return `<div class="tabs" style="margin:0 0 16px;gap:8px"><button type="button" class="btn ${active==='details'?'active':''}" id="subDetails">Genel Bilgiler</button><button type="button" class="btn ${active==='limits'?'active':''}" id="subLimits">Çalışma Sınırları</button><button type="button" class="btn ${active==='off'?'active':''}" id="subOff">Gün / Saat Kapatma</button></div>`}
 function wireInfoSubnav(){if($('subDetails'))$('subDetails').onclick=renderInfoTab;if($('subLimits'))$('subLimits').onclick=renderLimitTab;if($('subOff'))$('subOff').onclick=loadOffMonth}
 function friendlyError(context,error){console.error(context,error);notify('personError','İşlem tamamlanamadı. Lütfen yeniden deneyin.','error')}
@@ -512,12 +435,10 @@ async function renderDutyTab(){
  const now=new Date(),m=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
  const rows=selectedInstitutionId?await client.from('duty_programs').select('month_key,status,payload').eq('institution_id',selectedInstitutionId).order('month_key',{ascending:false}).limit(12):{data:[]};
  if(rows.error){el.textContent='Nöbet bilgileri şu anda yüklenemiyor.';return}
- const found=[];for(const prog of rows.data||[]){const shifts=prog.payload?.shifts||{},assignments=prog.payload?.assignments||{};for(const [key,id] of Object.entries(assignments)){if(id!==activePerson.user_id)continue;const [date,index]=key.split('|'),shift=(shifts[date]||[{start:'08:00',end:'16:00'},{start:'16:00',end:'00:00'}])[Number(index)];if(!shift)continue;const [a,b]=[shift.start,shift.end].map(t=>{const [h,min]=t.split(':').map(Number);return h*60+min});found.push({date,time:shift.start+'–'+shift.end,shift,hours:((b-a+1440)%1440||1440)/60,status:prog.status})}}
+ const found=[];for(const prog of rows.data||[]){const shifts=prog.payload?.shifts||{},assignments=prog.payload?.assignments||{};for(const [key,id] of Object.entries(assignments)){if(id!==activePerson.user_id)continue;const [date,index]=key.split('|'),shift=(shifts[date]||[{start:'08:00',end:'16:00'},{start:'16:00',end:'00:00'}])[Number(index)];if(!shift)continue;const [a,b]=[shift.start,shift.end].map(t=>{const [h,min]=t.split(':').map(Number);return h*60+min});found.push({date,time:shift.start+'–'+shift.end,hours:((b-a+1440)%1440||1440)/60,status:prog.status})}}
  const monthRows=found.filter(x=>x.date.startsWith(m)),total=found.reduce((a,x)=>a+x.hours,0);
- const nightTotal=found.reduce((a,x)=>a+nightHoursForShift(x),0);
- const holidayCount=found.filter(x=>calendarSpecialDay(x.date)?.[1]).length;
  const dayCounts=[0,0,0,0,0,0,0];for(const x of found){dayCounts[(new Date(x.date+'T12:00:00').getDay()+6)%7]++}
- el.innerHTML=`<div class="detail-grid"><div>Bu ay nöbet<b>${monthRows.length}</b></div><div>Son 12 ay nöbet<b>${found.length}</b></div><div>Son 12 ay toplam saat<b>${total.toLocaleString('tr-TR')} saat</b></div><div>Bu ay toplam saat<b>${monthRows.reduce((a,x)=>a+x.hours,0).toLocaleString('tr-TR')} saat</b></div></div><p class="sub" style="margin-top:12px">Pzt ${dayCounts[0]} · Sal ${dayCounts[1]} · Çar ${dayCounts[2]} · Per ${dayCounts[3]} · Cum ${dayCounts[4]} · Cmt ${dayCounts[5]} · Paz ${dayCounts[6]}</p><div style="max-height:240px;overflow:auto">${found.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="notice">${escapeHtml(x.date)} · ${escapeHtml(x.time)} · ${x.hours} saat · ${x.status==='published'?'Yayınlandı':'Taslak'}</div>`).join('')||'<p class="sub">Kayıtlı nöbet bulunamadı.</p>'}</div><p class="sub">Gece saati (22.00–06.00): <b>${nightTotal.toLocaleString('tr-TR',{maximumFractionDigits:2})} saat</b> · Başlangıç günü resmî tatil/bayram olan nöbet: <b>${holidayCount}</b></p><p class="sub">Bu özet erişilebilir son 12 program kaydını kapsar. Gece saatleri vardiyanın gece yarısını aşması dikkate alınarak hesaplanır. Tatil sayımı nöbetin başladığı güne göredir; dinî bayramlar yalnız doğrulanmış 2026 tarihleri için tanımlıdır.</p>`;
+ el.innerHTML=`<div class="detail-grid"><div>Bu ay nöbet<b>${monthRows.length}</b></div><div>Son 12 ay nöbet<b>${found.length}</b></div><div>Son 12 ay toplam saat<b>${total.toLocaleString('tr-TR')} saat</b></div><div>Bu ay toplam saat<b>${monthRows.reduce((a,x)=>a+x.hours,0).toLocaleString('tr-TR')} saat</b></div></div><p class="sub" style="margin-top:12px">Pzt ${dayCounts[0]} · Sal ${dayCounts[1]} · Çar ${dayCounts[2]} · Per ${dayCounts[3]} · Cum ${dayCounts[4]} · Cmt ${dayCounts[5]} · Paz ${dayCounts[6]}</p><div style="max-height:240px;overflow:auto">${found.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="notice">${escapeHtml(x.date)} · ${escapeHtml(x.time)} · ${x.hours} saat · ${x.status==='published'?'Yayınlandı':'Taslak'}</div>`).join('')||'<p class="sub">Kayıtlı nöbet bulunamadı.</p>'}</div><p class="sub">Bu özet erişilebilir son 12 aylık kayıtları kapsar; resmî tatil ve kesin gece saatleri henüz hesaplanmaz.</p>`;
 }
 async function renderInfoTab(){
  activatePersonTab('tabInfo');$('personTab').innerHTML='<p class="sub">Personel bilgileri yükleniyor…</p>';
@@ -627,7 +548,7 @@ function validateAssignment(id,key){if(remoteLoadPending)return 'Sunucu program�
  if(limit?.weekly_max!=null&&weekHours+shiftLength(idx,date)>Number(limit.weekly_max))return 'Haftalık azami çalışma saati aşılır.';
  return null;
 }
-async function assignToSlot(id,key){const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}if(!await confirmFeastFairness(id,key.slice(0,10)))return;const again=validateAssignment(id,key);if(again){alert('Atama yapılamadı: '+again);return}draft[key]=id;persistDraft();renderCalendar()}
+function assignToSlot(id,key){const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}draft[key]=id;persistDraft();renderCalendar()}
 function openShiftConfig(date){if(remoteLoadPending){alert('Sunucu programı yükleniyor.');return}if(remoteProgram?.status==='published'){alert('Yayınlanmış programın vardiya ayarları değiştirilemez.');return}
  const shifts=getShifts(date).map(x=>({...x}));
  modal('Günlük Vardiyalar · '+date,`<p class="sub">Vardiya başlangıcı, bitişi ve gerekli personel sayısını belirleyin. Değişiklikler yalnız bu tarayıcıdaki taslakta saklanır. Personel uygunluk takvimi bu vardiya tanımlarını kullanır.</p><div id="shiftRows"></div><div class="flex"><button class="btn" id="addShiftRow">+ Vardiya Ekle</button><button class="btn primary" id="saveShiftRows">Vardiyaları Kaydet</button></div><div id="shiftConfigMsg" class="notice hidden"></div>`);
@@ -640,90 +561,37 @@ function openShiftConfig(date){if(remoteLoadPending){alert('Sunucu programı yü
 $('shiftConfigBtn').onclick=()=>{const date=prompt('Vardiya düzenlenecek tarih (YYYY-AA-GG):',monthKey()+'-01');if(!date)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!date.startsWith(monthKey()+'-')||Number(date.slice(-2))<1||Number(date.slice(-2))>new Date(month.getFullYear(),month.getMonth()+1,0).getDate()){alert('Görüntülenen ay içinde geçerli bir tarih girin.');return}openShiftConfig(date)};
 $('autoBtn').onclick=()=>{if(remoteLoadPending||remoteProgram?.status==='published'){alert('Yayınlanmış programı değiştirmek için önce Yayını Düzenle seçeneğini kullanın.');return}if(!plannerPeople.length){alert('Aktif personel yok.');return}if(!confirm('Boş vardiya kontenjanları otomatik doldurulsun mu? Mevcut manuel atamalar korunacak.'))return;let added=0,empty=0;const days=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();for(let d=1;d<=days;d++){const date=monthKey()+'-'+String(d).padStart(2,'0');getShifts(date).forEach((sh,i)=>{for(let seat=0;seat<sh.count;seat++){const key=date+'|'+i+'|'+seat;if(draft[key])continue;const candidates=plannerPeople.filter(p=>!validateAssignment(p.id,key)).sort((a,b)=>assignmentHours(a.id)-assignmentHours(b.id));if(candidates.length){draft[key]=candidates[0].id;added++}else empty++}})}persistDraft();renderCalendar();alert(added+' atama yapıldı. '+empty+' kontenjan boş kaldı. Bu işlem yalnızca geçici taslaktır; dinlenme ve kurumun tüm özel kuralları henüz doğrulanmıyor.')};
 // Vardiyalı kurumlara özel Excel puantajı: okul ve diğer kurumların mevcut çıktıları değişmez.
-function selectedIsShiftInstitution(){const current=institutions.find(x=>String(x.id)===String(selectedInstitutionId));return current?.institution_type==='shift_organization'}
+function selectedIsShiftInstitution(){return institutions.find(x=>String(x.id)===String(selectedInstitutionId))?.institution_type==='shift_organization'}
 function updateShiftExcelVisibility(){const b=$('exportShiftExcel');if(b)b.classList.toggle('hidden',!selectedIsShiftInstitution())}
-async function refreshShiftExcelFromServer(){if(!selectedInstitutionId||!client)return;const id=selectedInstitutionId;try{const {data,error}=await client.from('institutions').select('id,institution_type').eq('id',id).maybeSingle();if(error||!data||String(selectedInstitutionId)!==String(id))return;const current=institutions.find(x=>String(x.id)===String(id));if(current)current.institution_type=data.institution_type;else institutions.push(data);updateShiftExcelVisibility()}catch(err){console.warn('Kurum türü okunamadı',err)}}
 async function ensureExcelLibrary(){
- if(globalThis.ExcelJS)return;
- await new Promise((resolve,reject)=>{const el=document.createElement('script');el.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';el.onload=resolve;el.onerror=()=>reject(new Error('Excel kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.'));document.head.appendChild(el)});
- if(!globalThis.ExcelJS)throw new Error('Excel biçimlendirme kütüphanesi kullanılamıyor.');
+ if(globalThis.XLSX)return;
+ await new Promise((resolve,reject)=>{const el=document.createElement('script');el.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';el.onload=resolve;el.onerror=()=>reject(new Error('Excel kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.'));document.head.appendChild(el)});
+ if(!globalThis.XLSX)throw new Error('Excel oluşturma kütüphanesi kullanılamıyor.');
 }
-function excelPersonColor(id){
- const idx=personnelColorIndex(id);
- if(idx<PERSON_MAIN_COLORS.length)return PERSON_MAIN_COLORS[idx][0];
- const hue=PERSON_EXTRA_HUES[(idx-10)%PERSON_EXTRA_HUES.length],s=.95,l=.68;
- const f=n=>{const k=(n+hue/30)%12,a=s*Math.min(l,1-l);return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1))))};
- return '#'+[f(0),f(8),f(4)].map(x=>x.toString(16).padStart(2,'0')).join('');
-}
-function excelTextOnColor(hex){
- const v=hex.replace('#','');const rgb=[0,2,4].map(i=>parseInt(v.slice(i,i+2),16)/255).map(x=>x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4));
- return (.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2])>.42?'172033':'FFFFFF';
-}
-async function exportShiftPuantaj(settings,personUnitMap){
+function exportShiftPuantaj(settings,personUnitMap){
  if(!selectedIsShiftInstitution()){alert('Bu Excel puantajı yalnızca vardiyalı kurumlar içindir.');return}
  if(!selectedInstitutionId){alert('Önce kurum seçin.');return}
- const year=month.getFullYear(),mon=month.getMonth(),days=new Date(year,mon+1,0).getDate(),key=monthKey();
- const groups=[],byShift=new Map();
- for(let d=1;d<=days;d++){
-  const date=key+'-'+String(d).padStart(2,'0');
-  getShifts(date).forEach(sh=>{const k=sh.start+'–'+sh.end;if(!byShift.has(k)){const g={key:k,width:0,shiftLabel:settings.shiftLabels[groups.length]||k};groups.push(g);byShift.set(k,g)};byShift.get(k).width=Math.max(byShift.get(k).width,Number(sh.count)||1)})
- }
- let col=2;for(const g of groups){g.first=col;g.width=Math.max(1,g.width);col+=g.width}
- const leaveStart=col,totalCols=col+3;
- const wb=new ExcelJS.Workbook();wb.creator='NÖBET PROGRAMI';wb.created=new Date();const ws=wb.addWorksheet('Aylık Puantaj',{views:[{state:'frozen',xSplit:1,ySplit:11}]});
- ws.properties.defaultRowHeight=21;
- ws.getRow(1).height=22;ws.getRow(2).height=22;ws.getRow(3).height=22;ws.getRow(4).height=22;
- // Kurum logosu yalnızca seçili kurumun kayıtlı HTTPS adresinden alınır.
- // Resim erişilemiyorsa veya Excel tarafından desteklenmiyorsa puantaj indirmesi devam eder.
- try{
-  const institution=institutions.find(x=>String(x.id)===String(selectedInstitutionId));
-  let logoUrl=institution?.logo_url;
-  if(!logoUrl&&client){const r=await client.from('institutions').select('logo_url').eq('id',selectedInstitutionId).maybeSingle();if(!r.error)logoUrl=r.data?.logo_url}
-  if(logoUrl&&/^https:\/\//i.test(logoUrl)){
-   const response=await fetch(logoUrl,{mode:'cors'});
-   if(!response.ok)throw new Error('Logo erişilemedi');
-   const blob=await response.blob();
-   if(blob.size>5*1024*1024)throw new Error('Logo 5 MB sınırını aşıyor');
-   let ext=blob.type==='image/png'?'png':blob.type==='image/jpeg'?'jpeg':null;
-   if(!ext)throw new Error('Excel için PNG veya JPEG logo gerekiyor');
-   const imageId=wb.addImage({buffer:await blob.arrayBuffer(),extension:ext});
-   const logoWidth=Math.min(180,Math.max(80,totalCols*15));
-   ws.addImage(imageId,{tl:{col:(totalCols-logoWidth/110)/2,row:0.15},ext:{width:logoWidth,height:75},editAs:'oneCell'});
-  }
- }catch(err){console.warn('Excel logosu eklenemedi; puantaj logosuz hazırlanacak:',err)}
-
- ws.getColumn(1).width=17;for(let c=2;c<=totalCols;c++)ws.getColumn(c).width=c>=leaveStart+1?17:17;
- const dark='10243F',gold='F5C66A',light='DDE8F5',border={style:'thin',color:{argb:'FF23374D'}};
- function paint(cell,fill,fg='10243F',bold=false,size=10){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+fill}};cell.font={name:'Arial',size,bold,color:{argb:'FF'+fg}};cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};cell.border={top:border,bottom:border,left:border,right:border}}
- function band(row,label,fill,fg='FFFFFF',size=11){ws.mergeCells(row,1,row,totalCols);const c=ws.getCell(row,1);c.value=label;paint(c,fill,fg,true,size);ws.getRow(row).height=row===1?34:25}
- band(5,settings.title||'AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ',dark,'FFFFFF',16);
- band(6,'KURUM ADI: '+settings.center,'203B60');
- band(7,'BİRİM ADI: '+settings.unitName,'203B60');
- band(8,'DÖNEM: '+settings.period,'203B60');
- ws.getRow(9).height=12;
- ws.mergeCells(10,1,11,1);ws.getCell(10,1).value=settings.hoursTitle||'ÇALIŞMA SAAT ARALIĞI';paint(ws.getCell(10,1),'B8CCE4',dark,true,9);
- for(const g of groups){const first=g.first+1,last=g.first+g.width; if(g.width>1)ws.mergeCells(10,first,10,last);ws.getCell(10,first).value=g.shiftLabel;paint(ws.getCell(10,first),'F9D65C',dark,true,10);for(let j=0;j<g.width;j++){const c=ws.getCell(11,first+j);c.value=g.width>1?'PERSONEL '+(j+1):g.shiftLabel;paint(c,'D8E5F4',dark,true,9)}}
- ['YILLIK İZİN','RAPOR','MAZERET İZNİ'].forEach((h,i)=>{const c=leaveStart+i+1;ws.mergeCells(10,c,11,c);ws.getCell(10,c).value=h;paint(ws.getCell(10,c),i===0?'F9D65C':'C9E8D3',dark,true,9)});
- ws.getRow(10).height=29;ws.getRow(11).height=25;
+ const year=month.getFullYear(),mon=month.getMonth(),count=new Date(year,mon+1,0).getDate();
+ const shifts=[];const shiftKeys=new Set();
+ for(let d=1;d<=count;d++){const date=monthKey()+'-'+String(d).padStart(2,'0');for(const sh of getShifts(date)){const key=sh.start+'–'+sh.end;if(!shiftKeys.has(key)){shiftKeys.add(key);shifts.push(key)}}}
+ const headers=['TARİH','GÜN',...shifts.map((sh,i)=>settings.shiftLabels[i]||sh),'YILLIK İZİN','RAPOR','MAZERET İZNİ'];
+ const matrix=[[settings.title||'AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ'],['KURUM / BKM: '+settings.center],['BİRİM ADI: '+settings.unitName],['DÖNEM: '+settings.period],[],[settings.hoursTitle||'ÇALIŞMA SAAT ARALIĞI',...headers.slice(1)]];
  const weekdays=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
- for(let d=1;d<=days;d++){
-  const date=key+'-'+String(d).padStart(2,'0'),dt=new Date(year,mon,d),row=11+d,weekend=[0,6].includes(dt.getDay());ws.getRow(row).height=30;
-  for(let c=1;c<=totalCols;c++)paint(ws.getCell(row,c),weekend?'B9E9F8':'FFFFFF',dark,false,9);
-  const dateCell=ws.getCell(row,1);dateCell.value=dt;dateCell.numFmt='dd.mm.yyyy';dateCell.font={name:'Arial',bold:true,size:10,color:{argb:'FF'+dark}};
+ for(let d=1;d<=count;d++){
+  const date=monthKey()+'-'+String(d).padStart(2,'0');const dt=new Date(year,mon,d);
+  const row=[date,weekdays[dt.getDay()],...shifts.map(()=>''),'','',''];
   const daily=getShifts(date);
-  daily.forEach((sh,i)=>{const g=byShift.get(sh.start+'–'+sh.end);if(!g)return;
-   for(let seat=0;seat<Number(sh.count||0);seat++){
-    const id=draft[date+'|'+i+'|'+seat];if(!id)continue;
-    if(settings.unitId&&personUnitMap.get(String(id))!==settings.unitName)continue;
-    const c=ws.getCell(row,g.first+seat+1),name=plannerPeople.find(p=>String(p.id)===String(id))?.name||'Personel';
-    const hex=excelPersonColor(id).replace('#','').toUpperCase();c.value=name;paint(c,hex,excelTextOnColor(hex),true,9)
-   }
-  });
+  daily.forEach((sh,i)=>{const col=shifts.indexOf(sh.start+'–'+sh.end)+2;if(col<2)return;const names=[];for(let seat=0;seat<Number(sh.count||0);seat++){const id=draft[date+'|'+i+'|'+seat];if(!id)continue;if(settings.unitId&&personUnitMap.get(String(id))!==settings.unitName)continue;names.push(plannerPeople.find(p=>String(p.id)===String(id))?.name||'Personel ('+id+')')}
+   if(names.length)row[col]=[row[col],names.join(' / ')].filter(Boolean).join(' / ');
+  });matrix.push(row)
  }
- ws.pageSetup={paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.2,right:.2,top:.35,bottom:.35,header:.1,footer:.1}};
- ws.printOptions={horizontalCentered:true};ws.headerFooter.oddFooter='Sayfa &P / &N';
- const buffer=await wb.xlsx.writeBuffer();const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
- const url=globalThis.URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='vardiyali-kurum-puantaj-'+key+'.xlsx';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>globalThis.URL.revokeObjectURL(url),2000);
+ const ws=XLSX.utils.aoa_to_sheet(matrix);
+ ws['!cols']=[{wch:15},{wch:14},...shifts.map(()=>({wch:29})),{wch:17},{wch:17},{wch:19}];
+ ws['!rows']=[{hpt:29},{hpt:24},{hpt:22},{hpt:22},{hpt:10},{hpt:30},...Array.from({length:count},()=>({hpt:33}))];
+ ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:headers.length-1}},{s:{r:1,c:0},e:{r:1,c:headers.length-1}},{s:{r:2,c:0},e:{r:2,c:headers.length-1}},{s:{r:3,c:0},e:{r:3,c:headers.length-1}}];
+ ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:5,c:0},e:{r:5+count,c:headers.length-1}})};
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aylık Puantaj');
+ XLSX.writeFile(wb,'vardiyali-kurum-puantaj-'+monthKey()+'.xlsx');
 }
 new MutationObserver(updateShiftExcelVisibility).observe($('selectedInstitutionLabel'),{childList:true,subtree:true,characterData:true});
 // Excel önizleme ayarları yalnızca dışa aktarmaya uygulanır; kurum/birim kayıtlarını değiştirmez.
@@ -736,7 +604,7 @@ $('exportShiftExcel').onclick=async()=>{
  const shifts=[],seen=new Set();
  for(let d=1;d<=count;d++){const date=monthKey()+'-'+String(d).padStart(2,'0');for(const sh of getShifts(date)){const k=sh.start+'–'+sh.end;if(!seen.has(k)){seen.add(k);shifts.push(k)}}}
  const period=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month).toLocaleUpperCase('tr-TR');
- modal('Vardiyalı Kurum · Excel Puantaj Ayarları',`<p class="sub">Birim adı sistemde kayıtlı birimlerden gelir. Diğer başlıkları yalnız bu Excel çıktısı için değiştirebilirsiniz.</p><form id="puantajSettingsForm"><div class="detail-grid"><div class="field"><label>Birim adı (sistemden)</label><select name="unitId" required><option value="">Birim seçin</option>${units.filter(u=>u.is_active).map(u=>`<option value="${escapeHtml(String(u.id))}">${escapeHtml(u.name)}</option>`).join('')}</select></div><div class="field"><label>Kurum adı (Excel başlığı)</label><input name="center" maxlength="160" required value="${escapeHtml(institutionName())}"></div><div class="field"><label>Çizelge başlığı</label><input name="title" maxlength="160" required value="AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ"></div><div class="field"><label>Dönem yazısı</label><input name="period" maxlength="80" required value="${escapeHtml(period)}"></div><div class="field"><label>Saat aralığı başlığı</label><input name="hoursTitle" maxlength="100" value="ÇALIŞMA SAAT ARALIĞI"></div>${shifts.map((sh,i)=>`<div class="field"><label>${escapeHtml(sh)} · Excel sütun başlığı</label><input name="shiftLabel${i}" maxlength="100" value="${escapeHtml(sh)}"></div>`).join('')}</div><p class="sub">Seçilen birime bağlı personellerin atamaları aktarılır. Nöbet saatleri ve sistemdeki birim adları değişmez.</p><div class="flex"><button type="submit" class="btn primary">📊 Excel İndir</button><button type="button" class="btn" id="cancelPuantajSettings">Vazgeç</button></div></form><div id="puantajSettingsMsg" class="notice hidden"></div>`);
+ modal('Vardiyalı Kurum · Excel Puantaj Ayarları',`<p class="sub">Birim adı sistemde kayıtlı birimlerden gelir. Diğer başlıkları yalnız bu Excel çıktısı için değiştirebilirsiniz.</p><form id="puantajSettingsForm"><div class="detail-grid"><div class="field"><label>Birim adı (sistemden)</label><select name="unitId" required><option value="">Birim seçin</option>${units.filter(u=>u.is_active).map(u=>`<option value="${escapeHtml(String(u.id))}">${escapeHtml(u.name)}</option>`).join('')}</select></div><div class="field"><label>Kurum / BKM başlığı</label><input name="center" maxlength="160" required value="${escapeHtml(institutionName())}"></div><div class="field"><label>Çizelge başlığı</label><input name="title" maxlength="160" required value="AYLIK PERSONEL ÇALIŞMA ÇİZELGESİ"></div><div class="field"><label>Dönem yazısı</label><input name="period" maxlength="80" required value="${escapeHtml(period)}"></div><div class="field"><label>Saat aralığı başlığı</label><input name="hoursTitle" maxlength="100" value="ÇALIŞMA SAAT ARALIĞI"></div>${shifts.map((sh,i)=>`<div class="field"><label>${escapeHtml(sh)} · Excel sütun başlığı</label><input name="shiftLabel${i}" maxlength="100" value="${escapeHtml(sh)}"></div>`).join('')}</div><p class="sub">Seçilen birime bağlı personellerin atamaları aktarılır. Nöbet saatleri ve sistemdeki birim adları değişmez.</p><div class="flex"><button type="submit" class="btn primary">📊 Excel İndir</button><button type="button" class="btn" id="cancelPuantajSettings">Vazgeç</button></div></form><div id="puantajSettingsMsg" class="notice hidden"></div>`);
  $('cancelPuantajSettings').onclick=closeModal;
  $('puantajSettingsForm').onsubmit=async e=>{
   e.preventDefault();if(selectedInstitutionId!==institutionId){notify('puantajSettingsMsg','Kurum değişti; yeniden açın.','error');return}
@@ -748,7 +616,7 @@ $('exportShiftExcel').onclick=async()=>{
    if(error)throw error;
    const personUnitMap=new Map((data||[]).map(p=>[String(p.user_id),p.unit_name]));
    const settings={unitId:unit.id,unitName:unit.name,center:String(fd.get('center')||'').trim(),title:String(fd.get('title')||'').trim(),period:String(fd.get('period')||'').trim(),hoursTitle:String(fd.get('hoursTitle')||'').trim(),shiftLabels:shifts.map((_,i)=>String(fd.get('shiftLabel'+i)||'').trim())};
-   await ensureExcelLibrary();await exportShiftPuantaj(settings,personUnitMap);closeModal();
+   await ensureExcelLibrary();exportShiftPuantaj(settings,personUnitMap);closeModal();
   }catch(err){console.error('Puantaj Excel',err);notify('puantajSettingsMsg','Excel indirilemedi: '+(err?.message||err),'error')}finally{button.disabled=false}
  };
 };
@@ -757,7 +625,7 @@ function renderPeople(){
  const pool=$('peoplePool');pool.replaceChildren();
  for(const p of plannerPeople){
   const el=document.createElement('div');el.className='person';el.draggable=true;el.dataset.person=p.id;el.tabIndex=0;el.setAttribute('role','button');
-  const name=document.createElement('strong');name.textContent='◉ '+p.name;name.setAttribute('data-personnel-color-id',p.id);name.style.color=personnelNameColor(p.id);name.style.fontWeight='800';
+  const name=document.createElement('strong');name.textContent='◉ '+p.name;name.style.color=personnelNameColor(p.id);name.style.fontWeight='800';
   const detail=document.createElement('small');detail.textContent=p.unit+' · Gerçek kayıt';el.append(name,detail);pool.append(el);
   el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',p.id);e.dataTransfer.effectAllowed='copyMove'});
   el.addEventListener('pointerdown',e=>downPoint={x:e.clientX,y:e.clientY});
@@ -775,7 +643,7 @@ async function openPlannerPerson(id){
  await openRealPerson(record);
 }
 function monthKey(){return `${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,'0')}`}
-function renderCalendar(){updateShiftExcelVisibility();refreshShiftExcelFromServer();updatePlannerHours();const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate(),start=(new Date(year,m,1).getDay()+6)%7,rows=6;$('monthLabel').textContent=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month);const visibleStart=weekly?weekIndex*7:0,visibleEnd=weekly?(weekIndex+1)*7:rows*7;let html='';for(let i=visibleStart;i<visibleEnd;i++){const d=i-start+1,valid=d>=1&&d<=days,cellDate=new Date(year,m,d),date=`${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}-${String(cellDate.getDate()).padStart(2,'0')}`,weekday=i%7,dayText=new Intl.DateTimeFormat('tr-TR',{weekday:'long'}).format(cellDate);let slots='';if(valid){getShifts(date).forEach((sh,j)=>{slots+=`<div class="shift-group"><button class="btn ghost shiftEdit" data-date="${date}" style="padding:3px 5px;font-size:10px;width:100%;text-align:left">✎ ${escapeHtml(sh.start)}–${escapeHtml(sh.end)} · ${sh.count} kişi</button>`;for(let seat=0;seat<sh.count;seat++){const k=date+'|'+j+'|'+seat,p=plannerPeople.find(x=>x.id===draft[k]);slots+=`<div class="slot ${p?'filled':''} " data-slot="${k}" title="${p?'Tıkla: atamayı kaldır':'Personel sürükleyip bırak'}">${p?'<strong class="personnel-name-color" data-personnel-color-id="'+escapeHtml(String(p.id))+'" style="color:'+personnelNameColor(p.id)+';font-weight:800">◉ '+escapeHtml(p.name)+'</strong>':'+ Personel Ata / Seç'}<small>${seat+1}. kontenjan</small></div>`}slots+='</div>'})}else{slots=`<div class="adjacent-info">${getShifts(date).map(sh=>`<div class="adjacent-shift">◈ ${escapeHtml(sh.start)}–${escapeHtml(sh.end)} · ${sh.count} kişi</div>`).join('')}<button type="button" class="btn ghost adjacent-open" data-month="${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}">Bu aya git ↗</button></div>`}const special=calendarSpecialDay(date);html+=`<div class="day ${valid?'':'adjacent-month'} ${special&&special[1]?'special-holiday':''}" data-date="${date}"><div class="dayhead"><b>${`${cellDate.getDate()} ${new Intl.DateTimeFormat('tr-TR',{month:'long'}).format(cellDate)} ${cellDate.getFullYear()}`}</b><span class="${weekday>=5?'weekend':''}">${dayText}</span>${special?`<span class="special-label">${escapeHtml(special[0])}</span>`:''}</div>${slots}</div>`}$('calendar').innerHTML=html;document.querySelectorAll('.adjacent-open').forEach(b=>b.onclick=()=>{const [y,m]=b.dataset.month.split('-').map(Number);month=new Date(y,m-1,1);weekIndex=0;remoteLoadSequence++;remoteLoadPending=true;remoteProgram={status:'published'};loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()});document.querySelectorAll('.shiftEdit').forEach(b=>b.onclick=()=>openShiftConfig(b.dataset.date));document.querySelectorAll('.day:not(.adjacent-month)[data-date]').forEach(day=>{day.addEventListener('dragover',e=>{e.preventDefault();day.classList.add('over')});day.addEventListener('dragleave',()=>day.classList.remove('over'));day.addEventListener('drop',e=>{e.preventDefault();day.classList.remove('over');const id=e.dataTransfer.getData('text/plain');if(!plannerPeople.some(p=>p.id===id))return;const slot=e.target.closest('.slot')||day.querySelector('.slot:not(.filled)');if(!slot)return;assignToSlot(id,slot.dataset.slot)})});document.querySelectorAll('.slot:not(.filled)').forEach(slot=>slot.onclick=()=>{const key=slot.dataset.slot;const options=plannerPeople.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');modal('Vardiyaya Personel Ata',`<p class="sub">${escapeHtml(key.split('|')[0])} · Personel seçerek atama yapabilirsiniz.</p><div class="field"><label>Personel</label><select id="quickAssignPerson"><option value="">Personel seçin</option>${options}</select></div><button class="btn primary" id="quickAssignBtn">Atamayı Yap</button>`);$('quickAssignBtn').onclick=()=>{const id=$('quickAssignPerson').value;if(!id){alert('Personel seçin.');return}const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}closeModal();assignToSlot(id,key)}});document.querySelectorAll('.slot.filled').forEach(s=>s.onclick=()=>{if(remoteProgram?.status==='published'){alert('Yayınlanmış program değiştirilemez.');return}if(confirm('Geçici atamayı kaldıralım mı?')){delete draft[s.dataset.slot];persistDraft();renderCalendar()}})}
+function renderCalendar(){updateShiftExcelVisibility();updatePlannerHours();const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate(),start=(new Date(year,m,1).getDay()+6)%7,rows=6;$('monthLabel').textContent=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric'}).format(month);const visibleStart=weekly?weekIndex*7:0,visibleEnd=weekly?(weekIndex+1)*7:rows*7;let html='';for(let i=visibleStart;i<visibleEnd;i++){const d=i-start+1,valid=d>=1&&d<=days,cellDate=new Date(year,m,d),date=`${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}-${String(cellDate.getDate()).padStart(2,'0')}`,weekday=i%7,dayText=new Intl.DateTimeFormat('tr-TR',{weekday:'long'}).format(cellDate);let slots='';if(valid){getShifts(date).forEach((sh,j)=>{slots+=`<div class="shift-group"><button class="btn ghost shiftEdit" data-date="${date}" style="padding:3px 5px;font-size:10px;width:100%;text-align:left">✎ ${escapeHtml(sh.start)}–${escapeHtml(sh.end)} · ${sh.count} kişi</button>`;for(let seat=0;seat<sh.count;seat++){const k=date+'|'+j+'|'+seat,p=plannerPeople.find(x=>x.id===draft[k]);slots+=`<div class="slot ${p?'filled':''} " data-slot="${k}" title="${p?'Tıkla: atamayı kaldır':'Personel sürükleyip bırak'}">${p?'<strong class="personnel-name-color" style="color:'+personnelNameColor(p.id)+';font-weight:800">◉ '+escapeHtml(p.name)+'</strong>':'+ Personel Ata / Seç'}<small>${seat+1}. kontenjan</small></div>`}slots+='</div>'})}else{slots=`<div class="adjacent-info">${getShifts(date).map(sh=>`<div class="adjacent-shift">◈ ${escapeHtml(sh.start)}–${escapeHtml(sh.end)} · ${sh.count} kişi</div>`).join('')}<button type="button" class="btn ghost adjacent-open" data-month="${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}">Bu aya git ↗</button></div>`}const special=calendarSpecialDay(date);html+=`<div class="day ${valid?'':'adjacent-month'} ${special&&special[1]?'special-holiday':''}" data-date="${date}"><div class="dayhead"><b>${`${cellDate.getDate()} ${new Intl.DateTimeFormat('tr-TR',{month:'long'}).format(cellDate)} ${cellDate.getFullYear()}`}</b><span class="${weekday>=5?'weekend':''}">${dayText}</span>${special?`<span class="special-label">${escapeHtml(special[0])}</span>`:''}</div>${slots}</div>`}$('calendar').innerHTML=html;document.querySelectorAll('.adjacent-open').forEach(b=>b.onclick=()=>{const [y,m]=b.dataset.month.split('-').map(Number);month=new Date(y,m-1,1);weekIndex=0;remoteLoadSequence++;remoteLoadPending=true;remoteProgram={status:'published'};loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()});document.querySelectorAll('.shiftEdit').forEach(b=>b.onclick=()=>openShiftConfig(b.dataset.date));document.querySelectorAll('.day:not(.adjacent-month)[data-date]').forEach(day=>{day.addEventListener('dragover',e=>{e.preventDefault();day.classList.add('over')});day.addEventListener('dragleave',()=>day.classList.remove('over'));day.addEventListener('drop',e=>{e.preventDefault();day.classList.remove('over');const id=e.dataTransfer.getData('text/plain');if(!plannerPeople.some(p=>p.id===id))return;const slot=e.target.closest('.slot')||day.querySelector('.slot:not(.filled)');if(!slot)return;assignToSlot(id,slot.dataset.slot)})});document.querySelectorAll('.slot:not(.filled)').forEach(slot=>slot.onclick=()=>{const key=slot.dataset.slot;const options=plannerPeople.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');modal('Vardiyaya Personel Ata',`<p class="sub">${escapeHtml(key.split('|')[0])} · Personel seçerek atama yapabilirsiniz.</p><div class="field"><label>Personel</label><select id="quickAssignPerson"><option value="">Personel seçin</option>${options}</select></div><button class="btn primary" id="quickAssignBtn">Atamayı Yap</button>`);$('quickAssignBtn').onclick=()=>{const id=$('quickAssignPerson').value;if(!id){alert('Personel seçin.');return}const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}closeModal();assignToSlot(id,key)}});document.querySelectorAll('.slot.filled').forEach(s=>s.onclick=()=>{if(remoteProgram?.status==='published'){alert('Yayınlanmış program değiştirilemez.');return}if(confirm('Geçici atamayı kaldıralım mı?')){delete draft[s.dataset.slot];persistDraft();renderCalendar()}})}
 $('managePersonShiftsBtn').onclick=openQuickOff;$('goTodayBtn').onclick=()=>{month=new Date(new Date().getFullYear(),new Date().getMonth(),1);weekIndex=0;remoteLoadSequence++;remoteLoadPending=true;remoteProgram={status:'published'};loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()};$('scrollNextMonth').onclick=()=>$('nextMonth').click();$('prevMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);weekIndex=0;remoteLoadSequence++;remoteLoadPending=true;remoteProgram={status:'published'};loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()};$('nextMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);weekIndex=0;remoteLoadSequence++;remoteLoadPending=true;remoteProgram={status:'published'};loadLocalDraft();loadPlannerPeople();renderCalendar();loadRemoteProgram()};$('viewToggle').onclick=()=>{if(!weekly){weekly=true;weekIndex=0;$('viewToggle').textContent='Aylık Görünüm'}else{weekly=false;$('viewToggle').textContent='Haftalık Görünüm'}$('prevWeek').classList.toggle('hidden',!weekly);$('nextWeek').classList.toggle('hidden',!weekly);renderCalendar()};$('prevWeek').onclick=()=>{weekIndex=Math.max(0,weekIndex-1);renderCalendar()};$('nextWeek').onclick=()=>{const rows=Math.ceil((((new Date(month.getFullYear(),month.getMonth(),1).getDay()+6)%7)+new Date(month.getFullYear(),month.getMonth()+1,0).getDate())/7);weekIndex=Math.min(rows-1,weekIndex+1);renderCalendar()};$('resetDemo').onclick=()=>{if(remoteLoadPending){alert('Sunucu programı yükleniyor.');return}if(remoteProgram?.status==='published'){alert('Yayınlanmış program sıfırlanamaz.');return}if(!confirm('Geçici nöbet taslağındaki tüm atamalar silinsin mi?'))return;draft={};persistDraft();renderCalendar()};
 
 // These modules intentionally operate only on the current browser draft.
@@ -802,37 +670,6 @@ async function loadDraftModule(kind){
  }catch(e){context.textContent='Bilgiler şu anda yüklenemiyor.'}
 }
 // TEST57 / Aşama 1: yayınlanmış nöbetleri yalnızca okur; veritabanına yazmaz.
-// Yedek önerileri yalnızca yöneticiye sunulur; kayıt işlemi mevcut güvenli RPC üzerinden yapılır.
-function substituteShiftWindow(row){
- const mins=t=>{const a=String(t||'').split(':').map(Number);return a.length===2&&a.every(Number.isFinite)?a[0]*60+a[1]:NaN};
- const start=mins(row.shift?.start),end=mins(row.shift?.end);
- if(!Number.isFinite(start)||!Number.isFinite(end))return null;
- const day=Date.parse(row.date+'T00:00:00Z');return [day+start*60000,day+(end<=start?end+1440:end)*60000];
-}
-function substituteWeekStart(date){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);return d.toISOString().slice(0,10)}
-function recommendSubstitutes(target,rows){
- const tw=substituteShiftWindow(target);if(!tw)return [];
- const week=substituteWeekStart(target.date), candidates=[];
- for(const p of plannerPeople){
-  if(p.id===target.id)continue;
-  const own=rows.filter(r=>r.id===p.id), limit=plannerLimits.get(p.id)||{};
-  // Bitiş günü de izin kapsamında olabilir: gece yarısını aşan vardiyaları kontrol et.
-  const endDate=new Date(tw[1]-1).toISOString().slice(0,10);
-  if(plannerLeaveBlocks.has(p.id+'|'+target.date)||plannerLeaveBlocks.has(p.id+'|'+endDate))continue;
-  if(plannerBlocks.has(p.id+'|'+target.date+'|'+target.index))continue;
-  if(own.some(r=>{const w=substituteShiftWindow(r);return w&&tw[0]<w[1]&&w[0]<tw[1]}))continue;
-  const monthHours=own.reduce((a,r)=>a+r.hours,0), weekHours=own.filter(r=>substituteWeekStart(r.date)===week).reduce((a,r)=>a+r.hours,0);
-  if(limit.monthly_max!=null&&monthHours+target.hours>Number(limit.monthly_max))continue;
-  if(limit.weekly_max!=null&&weekHours+target.hours>Number(limit.weekly_max))continue;
-  const nightCount=own.filter(r=>nightHoursForShift(r)>0).length;
-  const weekendCount=own.filter(r=>[0,6].includes(new Date(r.date+'T12:00:00Z').getUTCDay())).length;
-  const holidayCount=own.filter(r=>calendarSpecialDay(r.date)?.[1]).length;
-  // Daha az toplam saat ve daha az ağır nöbet yükü önceliklidir.
-  const score=monthHours+nightCount*4+weekendCount*2+holidayCount*3;
-  candidates.push({person:p,monthHours,weekHours,nightCount,weekendCount,holidayCount,score});
- }
- return candidates.sort((a,b)=>a.score-b.score||a.person.name.localeCompare(b.person.name,'tr')).slice(0,8);
-}
 let publishedSwapSeq=0;
 async function loadPublishedSwap(){
  const seq=++publishedSwapSeq, inst=selectedInstitutionId, key=monthKey();
@@ -868,7 +705,6 @@ async function loadPublishedSwap(){
      if(!sel.value||!reason.value){alert('Yeni personeli ve değişiklik nedenini seçin.');return}
      const chosen=plannerPeople.find(p=>p.id===sel.value);
      const fullReason=reason.value==='Diğer'&&detail.value.trim()?('Diğer: '+detail.value.trim()):reason.value;
-     if(!await confirmFeastFairness(sel.value,row.date))return;
      if(!confirm(row.date+' '+row.shift.start+'–'+row.shift.end+' nöbeti '+(names.get(row.id)||'eski personel')+' yerine '+(chosen?.name||'yeni personel')+' kişisine aktarılsın mı?\nNeden: '+reason.value+'\nBu işlem yayımlanmış programı günceller ve geçmişe kaydedilir.'))return;
      button.disabled=true;
      try{
@@ -880,15 +716,7 @@ async function loadPublishedSwap(){
      }catch(e){alert('Nöbet değiştirilemedi: '+programErrorText(e))}
      finally{button.disabled=false}
     };
-    const suggest=document.createElement('button');suggest.type='button';suggest.className='btn ghost';suggest.textContent='✨ Yedek Öner';
-    const suggestions=document.createElement('div');suggestions.className='notice hidden';suggestions.style.cssText='margin-top:10px;max-width:100%;';
-    suggest.onclick=()=>{
-     if(!suggestions.classList.contains('hidden')){suggestions.classList.add('hidden');return}
-     const candidates=recommendSubstitutes(row,rows);suggestions.replaceChildren();suggestions.classList.remove('hidden');
-     const info=document.createElement('p');info.className='sub';info.textContent=candidates.length?'Uygun adaylar (düşük nöbet yükü önce). Seçim yapıldığında yalnızca personel alanı doldurulur.':'Bu nöbet için uygun yedek bulunamadı. İzin, çakışma ve saat sınırlarını kontrol edin.';suggestions.append(info);
-     for(const c of candidates){const choice=document.createElement('button');choice.type='button';choice.className='btn ghost';choice.style.cssText='display:block;text-align:left;width:100%;margin:6px 0;white-space:normal;';choice.textContent=c.person.name+' · Bu ay '+c.monthHours.toLocaleString('tr-TR')+' saat · Bu hafta '+c.weekHours.toLocaleString('tr-TR')+' saat · Gece '+c.nightCount+' · Hafta sonu '+c.weekendCount+' · Tatil '+c.holidayCount;choice.onclick=()=>{sel.value=c.person.id;suggestions.classList.add('hidden')};suggestions.append(choice)}
-    };
-    controls.append(sel,reason,suggest,button);card.append(controls,detail,suggestions);
+    controls.append(sel,reason,button);card.append(controls,detail);
    }
    root.append(card);
   }
@@ -896,7 +724,7 @@ async function loadPublishedSwap(){
 }
 function draftRows(){return Object.entries(draft).map(([key,id])=>{const [date,index,seat]=key.split('|');const shift=getShifts(date)[Number(index)];return shift?{key,date,index:Number(index),seat:Number(seat||0),id,shift,hours:shiftLength(Number(index),date)}:null}).filter(Boolean).sort((a,b)=>a.key.localeCompare(b.key))}
 function renderDraftSwap(){const root=$('swapList');root.replaceChildren();const rows=draftRows();if(!rows.length){root.textContent='Bu ay için taslak nöbet ataması yok. Önce Nöbet Hazırla ekranında atama yapın.';return}
- for(const row of rows){const card=document.createElement('div');card.className='panel';card.style.margin='10px 0';const person=plannerPeople.find(p=>p.id===row.id);const title=document.createElement('strong');title.textContent=row.date+' · '+row.shift.start+'–'+row.shift.end+' · '+(person?.name||'Kayıtlı olmayan personel');const sel=document.createElement('select');sel.style.margin='8px 0';for(const [id,name] of [['','Yeni personel seçin'],...plannerPeople.map(p=>[p.id,p.name])]){const o=document.createElement('option');o.value=id;o.textContent=name;sel.append(o)}const btn=document.createElement('button');btn.className='btn';btn.textContent='Taslak Atamasını Değiştir';btn.onclick=async()=>{const id=sel.value;if(!id){alert('Yeni personeli seçin.');return}if(id===row.id){alert('Aynı personel seçildi.');return}const err=validateAssignment(id,row.key);if(err){alert('Değişiklik yapılamadı: '+err);return}if(!await confirmFeastFairness(id,row.date))return;if(!confirm('Bu taslak nöbeti seçilen personele aktaralım mı?'))return;draft[row.key]=id;persistDraft();renderDraftSwap()};card.append(title,sel,btn);root.append(card)}
+ for(const row of rows){const card=document.createElement('div');card.className='panel';card.style.margin='10px 0';const person=plannerPeople.find(p=>p.id===row.id);const title=document.createElement('strong');title.textContent=row.date+' · '+row.shift.start+'–'+row.shift.end+' · '+(person?.name||'Kayıtlı olmayan personel');const sel=document.createElement('select');sel.style.margin='8px 0';for(const [id,name] of [['','Yeni personel seçin'],...plannerPeople.map(p=>[p.id,p.name])]){const o=document.createElement('option');o.value=id;o.textContent=name;sel.append(o)}const btn=document.createElement('button');btn.className='btn';btn.textContent='Taslak Atamasını Değiştir';btn.onclick=()=>{const id=sel.value;if(!id){alert('Yeni personeli seçin.');return}if(id===row.id){alert('Aynı personel seçildi.');return}const err=validateAssignment(id,row.key);if(err){alert('Değişiklik yapılamadı: '+err);return}if(!confirm('Bu taslak nöbeti seçilen personele aktaralım mı?'))return;draft[row.key]=id;persistDraft();renderDraftSwap()};card.append(title,sel,btn);root.append(card)}
 }
 // Adalet Raporu yalnızca yayınlanmış, salt okunur programı esas alır.
 let publishedFairnessRows=[];
@@ -914,41 +742,6 @@ function nightHoursForShift(row){
    total+=Math.max(0,Math.min(finish,hi)-Math.max(a,lo));
  }
  return total/60;
-}
-
-// TATİL SAATİ RAPORU: Salt okunur. Atama, yayımlama ve personel uygunluğu akışlarını değiştirmez.
-// 28 Ekim ve dinî bayram arifelerinde tatil 13:00'te başlar; diğer resmî tatiller tam gündür.
-function holidayIntervalsForDate(date){
- const day=calendarSpecialDay(date);
- const monthDay=date.slice(5);
- const eveStarts=Object.values(RELIGIOUS_FEAST_STARTS).flat().map(first=>{
-  const d=new Date(first+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-1);
-  return d.toISOString().slice(0,10);
- });
- if(monthDay==='10-28'||eveStarts.includes(date))
-  return [{start:13*60,end:24*60,name:monthDay==='10-28'?'Cumhuriyet Bayramı arifesi':'Dinî bayram arifesi',partial:true}];
- if(day&&day[1])return [{start:0,end:24*60,name:day[0],partial:false}];
- return [];
-}
-function holidayHoursForShift(row){
- const parse=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?Number(m[1])*60+Number(m[2]):NaN};
- const start=parse(row.shift?.start),end=parse(row.shift?.end);
- if(!Number.isFinite(start)||!Number.isFinite(end))return {total:0,full:0,half:0,parts:[]};
- const finish=end<=start?end+1440:end;
- const base=new Date(row.date+'T00:00:00Z');
- const parts=[];let full=0,half=0;
- for(let offset=0;offset<=Math.ceil(finish/1440);offset++){
-  const d=new Date(base);d.setUTCDate(d.getUTCDate()+offset);
-  const date=d.toISOString().slice(0,10);
-  for(const period of holidayIntervalsForDate(date)){
-   const overlap=Math.max(0,Math.min(finish,offset*1440+period.end)-Math.max(start,offset*1440+period.start));
-   if(!overlap)continue;
-   const hours=overlap/60;
-   if(period.partial)half+=hours;else full+=hours;
-   parts.push({date,name:period.name,hours,partial:period.partial});
-  }
- }
- return {total:full+half,full,half,parts};
 }
 function fairnessData(){
  const byId=new Map(plannerPeople.map(p=>[p.id,{id:p.id,name:p.name,count:0,hours:0,night:0,nightHours:0,saturday:0,sunday:0,days:[0,0,0,0,0,0,0]}]));
@@ -1027,15 +820,7 @@ function openFairnessPerson(person){
  const monthly=section('Aylık nöbet geçmişi');const months=new Map();for(const r of rows){const key=r.date.slice(0,7),v=months.get(key)||{count:0,hours:0,night:0};v.count++;v.hours+=r.hours;v.night+=nightHoursForShift(r);months.set(key,v)}
  const monthTable=document.createElement('table');monthTable.style.cssText='width:100%;border-collapse:collapse';const monthHead=document.createElement('tr');for(const label of ['Ay','Nöbet','Toplam saat','Gece saati']){const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:8px;border-bottom:1px solid #587087';monthHead.append(th)}monthTable.append(monthHead);for(const [key,v] of [...months].sort((a,b)=>a[0].localeCompare(b[0]))){const tr=document.createElement('tr');for(const val of [key,v.count,format(v.hours),format(v.night)]){const td=document.createElement('td');td.textContent=String(val);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}monthTable.append(tr)}monthly.append(monthTable);
  const detail=section('Tarih ve vardiya ayrıntıları');const wrap=document.createElement('div');wrap.style.overflowX='auto';const tbl=document.createElement('table');tbl.style.cssText='width:100%;min-width:540px;border-collapse:collapse';const header=document.createElement('tr');for(const label of ['Tarih','Gün','Vardiya','Toplam saat','Gece saati']){const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:8px;border-bottom:1px solid #587087';header.append(th)}tbl.append(header);for(const r of rows){const date=new Date(r.date+'T12:00:00'),index=(date.getDay()+6)%7;const tr=document.createElement('tr');for(const value of [r.date,names[index],(r.shift?.start||'—')+' – '+(r.shift?.end||'—'),format(r.hours),format(nightHoursForShift(r))]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}tbl.append(tr)}wrap.append(tbl);detail.append(wrap);
- const holidayRows=rows.map(r=>({row:r,calc:holidayHoursForShift(r)})).filter(x=>x.calc.total>0);
- const holidaySection=section('Resmî tatil ve dinî bayram saatleri');
- const sumHoliday=holidayRows.reduce((a,x)=>a+x.calc.total,0),sumHalf=holidayRows.reduce((a,x)=>a+x.calc.half,0);
- const holidayInfo=document.createElement('p');holidayInfo.className='sub';
- holidayInfo.textContent='Toplam '+format(sumHoliday)+' tatil saati ('+format(sumHalf)+' saat yarım gün tatili dahil). Gece yarısını aşan vardiyalar her takvim gününe ayrı dağıtılır.';
- holidaySection.append(holidayInfo);
- if(holidayRows.length){const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse';const head=document.createElement('tr');for(const title of ['Vardiya tarihi','Vardiya','Tatil kapsamı','Tatil saati']){const th=document.createElement('th');th.textContent=title;th.style.cssText='padding:8px;text-align:left;border-bottom:1px solid #587087';head.append(th)}table.append(head);
- for(const item of holidayRows){const tr=document.createElement('tr');for(const value of [item.row.date,(item.row.shift?.start||'—')+' – '+(item.row.shift?.end||'—'),item.calc.parts.map(p=>p.date+' '+p.name).join(' / '),format(item.calc.total)]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}table.append(tr)}const scroll=document.createElement('div');scroll.style.overflowX='auto';scroll.append(table);holidaySection.append(scroll)}
- const note=document.createElement('p');note.className='sub';note.textContent='Hesaplama, yalnızca seçilen dönemin yayımlanmış nöbetlerine uygulanır. 28 Ekim ve dinî bayram arifelerinde 13.00 sonrası tatil kabul edilir. 2029–2030 dinî bayram tarihleri resmî takvimle teyit edilmelidir.';root.append(note);
+ const note=document.createElement('p');note.className='sub';note.textContent='Bu analiz yalnızca seçilen dönemin yayınlanmış nöbetlerini içerir. Resmî tatil ve bayram sınıflandırması henüz dahil değildir.';root.append(note);
  fairnessPersonOverlay.classList.remove('hidden');fairnessPersonOverlay.style.display='flex';$('fairnessPersonClose').focus();
 }
 
@@ -1060,11 +845,6 @@ function renderPublishedFairness(){
  const staffPanel=makePanel('Personel nöbet sayıları');for(const x of active)barLine(staffPanel,x.name,x.count,Math.max(1,...active.map(p=>p.count)),'#60a5fa');
  const monthly=new Map();for(const row of publishedFairnessRows){const key=row.date.slice(0,7);const val=monthly.get(key)||{count:0,hours:0};val.count++;val.hours+=row.hours;monthly.set(key,val)}
  const monthlyPanel=makePanel('Aylık nöbet eğilimi');for(const [key,val] of [...monthly.entries()].sort((a,b)=>a[0].localeCompare(b[0])))barLine(monthlyPanel,key,val.count,Math.max(1,...[...monthly.values()].map(v=>v.count)),'#a78bfa',' nöbet');
- const holidayTotals=new Map();
- for(const row of publishedFairnessRows){const h=holidayHoursForShift(row);const v=holidayTotals.get(row.id)||{hours:0,half:0};v.hours+=h.total;v.half+=h.half;holidayTotals.set(row.id,v)}
- const holidayPanel=makePanel('Resmî tatil / bayram saatleri');
- const holidayMaximum=Math.max(1,...[...holidayTotals.values()].map(x=>x.hours));
- for(const x of active){const h=holidayTotals.get(x.id)||{hours:0,half:0};barLine(holidayPanel,x.name,h.hours,holidayMaximum,'#f59e0b',' saat');if(h.half>0){const small=document.createElement('small');small.textContent='Yarım gün tatilinden: '+fmt(h.half)+' saat';holidayPanel.append(small)}}
  root.append(dashboard);
  // TEST 46: Yalnızca yayınlanmış verilerden, açıklanabilir personeller arası karşılaştırma.
  const compare=document.createElement('section');compare.style.cssText='margin:18px 0 24px;padding:17px;border:1px solid #587087;border-radius:12px';
@@ -1083,14 +863,14 @@ function renderPublishedFairness(){
  }
  root.append(compare);
  const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;min-width:1050px';
- const labels=['Personel','Toplam nöbet','Toplam saat','Tatil saati','Yarım gün tatil saati','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+ const labels=['Personel','Toplam nöbet','Toplam saat','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
  const head=document.createElement('tr');labels.forEach(label=>{const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:10px;border-bottom:1px solid #74879a';head.append(th)});tbl.append(head);
- for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),fmt((holidayTotals.get(x.id)||{hours:0}).hours),fmt((holidayTotals.get(x.id)||{half:0}).half),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});if(x.count>0){const nameCell=tr.firstElementChild;nameCell.style.cssText+=';cursor:pointer;color:#93c5fd;text-decoration:underline;text-underline-offset:3px';nameCell.title='Ayrıntılı analizi aç';nameCell.tabIndex=0;nameCell.setAttribute('role','button');nameCell.onclick=()=>openFairnessPerson(x);nameCell.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFairnessPerson(x)}}}tbl.append(tr)}root.append(tbl);
- const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Tatil saatleri gün sınırları ve yarım gün başlangıcı dikkate alınarak ayrıca hesaplanır.';root.append(note);
+ for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});if(x.count>0){const nameCell=tr.firstElementChild;nameCell.style.cssText+=';cursor:pointer;color:#93c5fd;text-decoration:underline;text-underline-offset:3px';nameCell.title='Ayrıntılı analizi aç';nameCell.tabIndex=0;nameCell.setAttribute('role','button');nameCell.onclick=()=>openFairnessPerson(x);nameCell.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFairnessPerson(x)}}}tbl.append(tr)}root.append(tbl);
+ const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Resmî tatil sınıflandırması bu aşamada dahil değildir.';root.append(note);
 }
 $('fairnessCsv').onclick=()=>{
  if(!publishedFairnessRows.length){alert('İndirilecek yayınlanmış nöbet verisi bulunamadı.');return}
- const rows=[['Personel','Toplam Nöbet','Toplam Saat','Tatil Saati','Yarım Gün Tatil Saati','Gece Nöbeti','Gece Saati (22-06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours.toFixed(2),publishedFairnessRows.filter(r=>r.id===x.id).reduce((a,r)=>a+holidayHoursForShift(r).total,0).toFixed(2),publishedFairnessRows.filter(r=>r.id===x.id).reduce((a,r)=>a+holidayHoursForShift(r).half,0).toFixed(2),x.night,x.nightHours.toFixed(2),...x.days])];
+ const rows=[['Personel','Toplam Nöbet','Toplam Saat','Gece Nöbeti','Gece Saati (22-06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours.toFixed(2),x.night,x.nightHours.toFixed(2),...x.days])];
  const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='yayinlanmis-adalet-'+$('fairnessPeriod').value+'-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)
 };
@@ -1490,37 +1270,11 @@ $('printProgram').onclick=async()=>{
 // Kalıcı program işlemleri Supabase SQL kurulumuna bağlıdır.
 await restoreSession();
 
-// Resmi tatil takvimi: 2024–2028 tarihleri Diyanet/DHMI; 2029–2030 ileri tarih tahmini.
-// Yalniz resmi tatiller ve dini bayram gunleri renklendirilir; arefe ayri renkte degildir.
-const RELIGIOUS_FEAST_STARTS={
- 2024:['2024-04-10','2024-06-16'],2025:['2025-03-30','2025-06-06'],
- 2026:['2026-03-20','2026-05-27'],2027:['2027-03-09','2027-05-16'],
- 2028:['2028-02-26','2028-05-05'],2029:['2029-02-14','2029-04-24'],
- 2030:['2030-02-04','2030-04-13']
-};
-const RELIGIOUS_DAYS=(()=>{const map={};for(const [year,starts] of Object.entries(RELIGIOUS_FEAST_STARTS)){
- starts.forEach((first,index)=>{const name=index?'Kurban Bayramı':'Ramazan Bayramı',count=index?4:3;
-  for(let i=0;i<count;i++){const d=new Date(first+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);map[d.toISOString().slice(0,10)]=[name+' · '+(i+1)+'. Gün',true,{name,day:i+1,year:Number(year)}]}
- });}return map})();
-function religiousFeastInfo(date){return RELIGIOUS_DAYS[date]?.[2]||null}
+// Sabit tarihli tatiller; dini bayramlar resmi takvimden dogrulanan yillarla sinirlidir.
 function calendarSpecialDay(date){
  const fixed={'01-01':['Yılbaşı',true],'04-23':['Ulusal Egemenlik ve Çocuk Bayramı',true],'05-01':['Emek ve Dayanışma Günü',true],'05-19':['Atatürk’ü Anma, Gençlik ve Spor Bayramı',true],'07-15':['Demokrasi ve Millî Birlik Günü',true],'08-30':['Zafer Bayramı',true],'10-29':['Cumhuriyet Bayramı',true],'11-10':['Atatürk’ü Anma Günü',false],'11-24':['Öğretmenler Günü',false]};
- return RELIGIOUS_DAYS[date]||fixed[date.slice(5)]||null;
-}
-// Bayram adaleti: yalniz onceki yillarin yayinlanmis nobetleri; uyari, engel degil.
-async function priorFeastDutyWarning(personId,date){
- const feast=religiousFeastInfo(date);
- if(!feast||!client||!selectedInstitutionId)return '';
- const {data,error}=await client.from('duty_programs').select('month_key,payload').eq('institution_id',selectedInstitutionId).eq('status','published').lt('month_key',date.slice(0,7)).order('month_key',{ascending:false}).limit(500);
- if(error)throw error;
- if((data||[]).length===500)throw Error('Bayram geçmişi sorgusu sınırına ulaştı; eksiksiz kontrol yapılamadı.');
- const matches=(data||[]).flatMap(p=>pdfRowsFromPayload(p.payload)).filter(r=>r.id===personId&&r.date<date).filter(r=>{const old=religiousFeastInfo(r.date);return old&&old.name===feast.name&&old.day===feast.day});
- if(!matches.length)return '';
- return '⚠️ BAYRAM ADALETİ UYARISI\n'+feast.name+' '+feast.day+'. gün nöbeti bu personele daha önce '+matches.length+' kez verilmiş:\n'+matches.map(r=>r.date).join(', ')+'\n\nAtama yine yapılabilir. Devam edilsin mi?';
-}
-async function confirmFeastFairness(personId,date){
- try{const warning=await priorFeastDutyWarning(personId,date);return !warning||confirm(warning)}
- catch(e){alert('Bayram geçmişi kontrol edilemedi: '+(e?.message||e)+'\nİşlem güvenlik amacıyla durduruldu.');return false}
+ const religious={'2026-03-20':['Ramazan Bayramı · 1. Gün',true],'2026-03-21':['Ramazan Bayramı · 2. Gün',true],'2026-03-22':['Ramazan Bayramı · 3. Gün',true],'2026-05-27':['Kurban Bayramı · 1. Gün',true],'2026-05-28':['Kurban Bayramı · 2. Gün',true],'2026-05-29':['Kurban Bayramı · 3. Gün',true],'2026-05-30':['Kurban Bayramı · 4. Gün',true]};
+ return religious[date]||fixed[date.slice(5)]||null;
 }
 // Mevcut personel takvimindeki ayni veritabanini kullanir; degisiklikleri kaydet butonuna kadar yerelde tutar.
 let quickOffPerson='',quickOffMonth=new Date(),quickOffOriginal=new Set(),quickOffEdited=new Set();
@@ -1578,5 +1332,43 @@ async function saveQuickOff(){
     toggle.setAttribute('aria-pressed',String(showing));
   });
 })();
+</script>
+<script>
+/* OKUL MODÜLÜ — ayrı veri anahtarı, mevcut vardiya fonksiyonları değiştirilmez. */
+(function(){
+'use strict';
+const css=document.createElement('style');css.textContent=`#schoolPage{padding:18px 0}.school-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.school-field{display:grid;gap:5px}.school-field input,.school-field select{width:100%;padding:10px;background:var(--input);color:var(--text);border:1px solid var(--border);border-radius:8px}.school-table{width:100%;border-collapse:collapse;min-width:700px}.school-table th,.school-table td{border-bottom:1px solid var(--border);padding:9px;text-align:left}.school-scroll{overflow:auto}.school-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.school-note{color:var(--muted);font-size:.9em}.school-tag{display:inline-block;padding:3px 7px;border:1px solid var(--border);border-radius:7px}`;document.head.append(css);
+const page=document.createElement('div');page.id='schoolPage';page.className='hidden';page.innerHTML=`<div class="panel" style="padding:20px"><h2 id="schoolTitle">Okul Nöbet Sistemi</h2><p class="school-note">Okul nöbetleri bu tarayıcıda, seçili kurum için ayrı taslak olarak saklanır. Diğer cihazlarla senkronize edilmez; resmî yayın değildir.</p><div class="school-actions"><button class="btn" id="schoolConfigBtn">⚙ Okul Ayarları</button><button class="btn" id="schoolPlanBtn">🗓 Nöbet Hazırla</button><button class="btn" id="schoolSwapBtn">🔁 Nöbet Değiştir</button><button class="btn" id="schoolReportBtn">📊 Adalet Raporu</button><button class="btn" id="schoolPrintBtn">🖨 Yazdır / PDF</button><button class="btn" id="schoolCsvBtn">⬇ CSV</button></div><div id="schoolContent"></div></div>`;
+document.querySelector('#appView').append(page);
+const $s=id=>document.getElementById(id);const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const days=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];let data,view='planner',schoolToken=0;
+const initial=()=>({days:[0,1,2,3,4],places:['Bahçe','Koridor','Kat'],breaks:[{start:'10:00',end:'10:15'},{start:'11:00',end:'11:15'},{start:'12:00',end:'12:40'}],teachers:[],assignments:[],vice:[]});
+const key=()=>`nobet-school-draft-v1:${selectedInstitutionId}`;
+function load(){try{data=JSON.parse(localStorage.getItem(key()))||initial()}catch{data=initial()}if(!Array.isArray(data.teachers))data=initial();data.vice||=[];data.assignments||=[]}
+function save(){try{localStorage.setItem(key(),JSON.stringify(data));return true}catch{alert('Tarayıcı kaydı başarısız. CSV yedeği alın.');return false}}
+function time(s){const a=String(s).split(':').map(Number);return a[0]*60+a[1]}
+function teacherOptions(value=''){return `<option value="">Öğretmen seç</option>`+data.teachers.map(t=>`<option value="${safe(t.id)}" ${t.id===value?'selected':''}>${safe(t.name)}</option>`).join('')}
+function rows(){return data.assignments.slice().sort((a,b)=>a.day-b.day||a.start.localeCompare(b.start)||a.place.localeCompare(b.place))}
+function teacherName(id){return data.teachers.find(t=>t.id===id)?.name||'Silinmiş öğretmen'}
+function render(){const el=$s('schoolContent');$s('schoolTitle').textContent=({config:'Okul Ayarları',planner:'Öğretmen Nöbet Programı',swap:'Nöbet Değiştir',report:'Adalet Raporu'})[view]||'Okul';if(view==='config'){
+el.innerHTML=`<h3>Öğretmen ve Nöbetçi Müdür Yardımcısı</h3><form id="schoolTeacherForm" class="school-actions"><input required id="schoolTeacherName" placeholder="Ad soyad" maxlength="100" style="min-width:210px"><select id="schoolTeacherRole"><option value="teacher">Öğretmen</option><option value="vice">Müdür yardımcısı</option></select><button class="btn primary">Ekle</button></form><div class="school-scroll"><table class="school-table"><thead><tr><th>Personel</th><th>Görev</th><th>İşlem</th></tr></thead><tbody>${data.teachers.map(t=>`<tr><td>${safe(t.name)}</td><td>${t.role==='vice'?'Müdür yardımcısı':'Öğretmen'}</td><td><button class="btn ghost" data-remove-teacher="${safe(t.id)}">Sil</button></td></tr>`).join('')}</tbody></table></div><h3>Nöbet Yerleri</h3><form id="schoolPlaceForm" class="school-actions"><input required id="schoolPlace" maxlength="70" placeholder="Nöbet yeri"><button class="btn">Yer ekle</button></form><div class="school-actions">${data.places.map((p,i)=>`<span class="school-tag">${safe(p)} <button data-remove-place="${i}" title="Sil">×</button></span>`).join('')}</div><h3>Okul Günleri</h3><div class="school-actions">${days.map((d,i)=>`<label><input type="checkbox" data-school-day="${i}" ${data.days.includes(i)?'checked':''}> ${d}</label>`).join('')}</div><h3>Teneffüs / Öğle Arası Saatleri</h3><form id="schoolBreakForm" class="school-actions"><input type="time" id="schoolBreakStart" required value="10:00"><input type="time" id="schoolBreakEnd" required value="10:15"><button class="btn">Saat ekle</button></form><div class="school-actions">${data.breaks.map((b,i)=>`<span class="school-tag">${safe(b.start)}–${safe(b.end)} <button data-remove-break="${i}">×</button></span>`).join('')}</div><p class="school-note">Her teneffüs farklı dakikalara bölünerek aynı yerde birden fazla öğretmene atanabilir.</p>`;
+$s('schoolTeacherForm').onsubmit=e=>{e.preventDefault();const name=$s('schoolTeacherName').value.trim();if(!name)return;data.teachers.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,7),name,role:$s('schoolTeacherRole').value});save();render()};$s('schoolPlaceForm').onsubmit=e=>{e.preventDefault();const p=$s('schoolPlace').value.trim();if(p&&!data.places.includes(p)){data.places.push(p);save();render()}};$s('schoolBreakForm').onsubmit=e=>{e.preventDefault();const start=$s('schoolBreakStart').value,end=$s('schoolBreakEnd').value;if(time(start)>=time(end))return alert('Bitiş saati başlangıçtan sonra olmalı.');data.breaks.push({start,end});data.breaks.sort((a,b)=>a.start.localeCompare(b.start));save();render()};el.querySelectorAll('[data-remove-teacher]').forEach(b=>b.onclick=()=>{const id=b.dataset.removeTeacher;if(data.assignments.some(a=>a.teacher===id)||data.vice.some(a=>a.teacher===id))return alert('Önce bu personele ait nöbetleri değiştirin.');data.teachers=data.teachers.filter(t=>t.id!==id);save();render()});el.querySelectorAll('[data-remove-place]').forEach(b=>b.onclick=()=>{const p=data.places[+b.dataset.removePlace];if(data.assignments.some(a=>a.place===p))return alert('Önce bu yerdeki nöbetleri silin.');data.places.splice(+b.dataset.removePlace,1);save();render()});el.querySelectorAll('[data-remove-break]').forEach(b=>b.onclick=()=>{data.breaks.splice(+b.dataset.removeBreak,1);save();render()});el.querySelectorAll('[data-school-day]').forEach(b=>b.onchange=()=>{data.days=Array.from(el.querySelectorAll('[data-school-day]:checked')).map(x=>+x.dataset.schoolDay);save()});
+}else if(view==='planner'){
+el.innerHTML=`<p class="school-note">Haftalık sabit nöbetler, yönetici değiştirene kadar korunur. Gün içindeki her zaman dilimi ayrı atanabilir.</p><form id="schoolAssignmentForm"><div class="school-grid"><label class="school-field">Gün<select id="saDay">${data.days.map(i=>`<option value="${i}">${days[i]}</option>`).join('')}</select></label><label class="school-field">Nöbet yeri<select id="saPlace">${data.places.map(p=>`<option>${safe(p)}</option>`).join('')}</select></label><label class="school-field">Başlangıç<input type="time" required id="saStart" value="10:00"></label><label class="school-field">Bitiş<input type="time" required id="saEnd" value="10:15"></label><label class="school-field">Öğretmen<select id="saTeacher" required>${teacherOptions()}</select></label></div><div class="school-actions"><button class="btn primary">Nöbet ata</button><button type="button" class="btn" id="saAuto">Boş yerleri otomatik doldur</button></div></form><h3>Haftalık Nöbet Çizelgesi</h3>${assignmentTable()}<h3>Nöbetçi Müdür Yardımcısı</h3><div class="school-grid">${data.days.map(day=>`<label class="school-field">${days[day]}<select data-vice-day="${day}"><option value="">Seçilmedi</option>${data.teachers.filter(t=>t.role==='vice').map(t=>`<option value="${safe(t.id)}" ${data.vice.find(v=>v.day===day)?.teacher===t.id?'selected':''}>${safe(t.name)}</option>`).join('')}</select></label>`).join('')}</div>`;
+$s('schoolAssignmentForm').onsubmit=e=>{e.preventDefault();const a={id:'a'+Date.now()+Math.random().toString(36).slice(2,7),day:+$s('saDay').value,place:$s('saPlace').value,start:$s('saStart').value,end:$s('saEnd').value,teacher:$s('saTeacher').value};if(!a.teacher||time(a.start)>=time(a.end))return alert('Öğretmen ve geçerli saat seçin.');if(data.assignments.some(x=>x.day===a.day&&x.teacher===a.teacher&&time(a.start)<time(x.end)&&time(a.end)>time(x.start)))return alert('Bu öğretmenin aynı saatte başka nöbeti var.');data.assignments.push(a);save();render()};$s('saAuto').onclick=autoFill;el.querySelectorAll('[data-vice-day]').forEach(b=>b.onchange=()=>{const day=+b.dataset.viceDay;data.vice=data.vice.filter(v=>v.day!==day);if(b.value)data.vice.push({day,teacher:b.value});save()});bindDeletes(el);
+}else if(view==='swap'){
+el.innerHTML=`<p class="school-note">İzinli/raporlu öğretmenin görevini başka bir öğretmene aktarın. Değişiklik aynı tarayıcıdaki okul taslağına kaydedilir.</p>${assignmentTable(true)}`;el.querySelectorAll('[data-replace]').forEach(b=>b.onchange=()=>{const a=data.assignments.find(x=>x.id===b.dataset.replace);if(!a||!b.value)return;const conflict=data.assignments.some(x=>x.id!==a.id&&x.day===a.day&&x.teacher===b.value&&time(a.start)<time(x.end)&&time(a.end)>time(x.start));if(conflict){alert('Seçilen öğretmenin o saatte nöbeti var.');render();return}a.teacher=b.value;save();render()});bindDeletes(el);
+}else{const summary=data.teachers.filter(t=>t.role==='teacher').map(t=>{const a=data.assignments.filter(x=>x.teacher===t.id);return {name:t.name,days:new Set(a.map(x=>x.day)).size,minutes:a.reduce((n,x)=>n+time(x.end)-time(x.start),0),places:[...new Set(a.map(x=>x.place))].join(', '),byday:days.map((_,i)=>a.some(x=>x.day===i)?1:0)}});el.innerHTML=`<p class="school-note">Haftalık sabit nöbetlerin özeti. Bir günde birden fazla bölüm nöbeti olsa da nöbet günü bir kez sayılır.</p><div class="school-scroll"><table class="school-table"><thead><tr><th>Öğretmen</th><th>Nöbet günü</th><th>Toplam dakika</th>${days.map(x=>`<th>${x.slice(0,3)}</th>`).join('')}<th>Yerler</th></tr></thead><tbody>${summary.map(x=>`<tr><td>${safe(x.name)}</td><td>${x.days}</td><td>${x.minutes}</td>${x.byday.map(n=>`<td>${n}</td>`).join('')}<td>${safe(x.places)}</td></tr>`).join('')}</tbody></table></div>`}
+}
+function assignmentTable(replace=false){return `<div class="school-scroll"><table class="school-table"><thead><tr><th>Gün</th><th>Saat</th><th>Yer</th><th>Öğretmen</th><th>İşlem</th></tr></thead><tbody>${rows().map(a=>`<tr><td>${days[a.day]}</td><td>${safe(a.start)}–${safe(a.end)}</td><td>${safe(a.place)}</td><td>${replace?`<select data-replace="${safe(a.id)}">${teacherOptions(a.teacher)}</select>`:safe(teacherName(a.teacher))}</td><td><button class="btn ghost" data-delete-assignment="${safe(a.id)}">Sil</button></td></tr>`).join('')}</tbody></table></div>`}
+function bindDeletes(el){el.querySelectorAll('[data-delete-assignment]').forEach(b=>b.onclick=()=>{if(!confirm('Bu nöbet ataması silinsin mi?'))return;data.assignments=data.assignments.filter(x=>x.id!==b.dataset.deleteAssignment);save();render()})}
+function autoFill(){const teachers=data.teachers.filter(t=>t.role==='teacher');if(!teachers.length||!data.days.length||!data.places.length||!data.breaks.length)return alert('Önce öğretmen, gün, yer ve teneffüs tanımlayın.');let added=0;for(const day of data.days)for(const place of data.places)for(const br of data.breaks){if(data.assignments.some(a=>a.day===day&&a.place===place&&time(a.start)<time(br.end)&&time(a.end)>time(br.start)))continue;const possible=teachers.filter(t=>!data.assignments.some(a=>a.day===day&&a.teacher===t.id&&time(a.start)<time(br.end)&&time(a.end)>time(br.start)));possible.sort((a,b)=>data.assignments.filter(x=>x.teacher===a.id).reduce((n,x)=>n+time(x.end)-time(x.start),0)-data.assignments.filter(x=>x.teacher===b.id).reduce((n,x)=>n+time(x.end)-time(x.start),0));if(possible[0]){data.assignments.push({id:'a'+Date.now()+Math.random().toString(36).slice(2,7),day,place,start:br.start,end:br.end,teacher:possible[0].id});added++}}save();render();alert(added+' boş nöbet alanı dolduruldu. Lütfen dağılımı kontrol edin.')} 
+function csv(){const lines=[['Gün','Başlangıç','Bitiş','Nöbet yeri','Öğretmen'],...rows().map(a=>[days[a.day],a.start,a.end,a.place,teacherName(a.teacher)])];const content='\ufeff'+lines.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob([content],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='okul-nobet-'+selectedInstitutionId+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function print(){const html=`<!doctype html><html lang="tr"><meta charset="utf-8"><title>Okul Nöbet Çizelgesi</title><style>body{font:14px Arial;padding:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:8px;text-align:left}</style><h2>${safe(selectedInstitutionName)} – Haftalık Nöbet Çizelgesi (Taslak)</h2><table><tr><th>Gün</th><th>Saat</th><th>Yer</th><th>Öğretmen</th></tr>${rows().map(a=>`<tr><td>${days[a.day]}</td><td>${safe(a.start)}–${safe(a.end)}</td><td>${safe(a.place)}</td><td>${safe(teacherName(a.teacher))}</td></tr>`).join('')}</table><h3>Nöbetçi Müdür Yardımcıları</h3>${data.vice.map(v=>`<p>${days[v.day]}: ${safe(teacherName(v.teacher))}</p>`).join('')}<script>window.print()<\/script></html>`;const w=window.open('','_blank');if(!w)return alert('Açılır pencereyi etkinleştirin.');w.document.write(html);w.document.close()}
+$s('schoolConfigBtn').onclick=()=>{view='config';render()};$s('schoolPlanBtn').onclick=()=>{view='planner';render()};$s('schoolSwapBtn').onclick=()=>{view='swap';render()};$s('schoolReportBtn').onclick=()=>{view='report';render()};$s('schoolCsvBtn').onclick=csv;$s('schoolPrintBtn').onclick=print;
+const originalNavigate=navigate;
+navigate=async function(pageName){const token=++schoolToken;if(!selectedInstitutionId||!['planner','swap','fairness'].includes(pageName)){page.classList.add('hidden');return originalNavigate(pageName)}let type=institutions.find(x=>x.id===selectedInstitutionId)?.institution_type; if(!type&&client){try{const r=await client.from('institutions').select('institution_type').eq('id',selectedInstitutionId).maybeSingle();type=r.data?.institution_type}catch{}}if(token!==schoolToken)return;if(type!=='school'){page.classList.add('hidden');return originalNavigate(pageName)}originalNavigate('home');$s('homePage').classList.add('hidden');$s('pageTitle').textContent='Okul Nöbet Sistemi';page.classList.remove('hidden');load();view=pageName==='fairness'?'report':pageName==='swap'?'swap':'planner';render()};
+})();
+
 </script>
 </html>
