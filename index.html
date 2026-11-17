@@ -392,6 +392,7 @@ async function refreshInstitutionPermission(){
  if(seq!==permissionCheckSequence||id!==selectedInstitutionId)return;
  $('addUserBtn').disabled=!canManageSelectedInstitution;
  $('manageUnitsBtn').disabled=!canManageSelectedInstitution;
+ updateProgramControls();
 }
 function institutionName(){return institutions.find(x=>x.id===selectedInstitutionId)?.name||selectedInstitutionName||'Kurum seçilmedi'}
 // Personeller ve Nöbet Hazırla aynı kurum üyeliği/profil kaynağını kullanır.
@@ -1122,12 +1123,12 @@ function programErrorText(error){
 }
 function updateProgramControls(){
  const editing=remoteProgram?.status==='editing',published=remoteProgram?.status==='published';
- $('saveBtn').disabled=remoteLoadPending||!isAdmin||!selectedInstitutionId||published;
- $('beginEditBtn').disabled=remoteLoadPending||!isAdmin||!selectedInstitutionId||!published;
- $('publishBtn').disabled=remoteLoadPending||!isAdmin||!selectedInstitutionId||!['draft','editing'].includes(remoteProgram?.status);
+ $('saveBtn').disabled=remoteLoadPending||!canManageSelectedInstitution||!selectedInstitutionId||published;
+ $('beginEditBtn').disabled=remoteLoadPending||!canManageSelectedInstitution||!selectedInstitutionId||!published;
+ $('publishBtn').disabled=remoteLoadPending||!canManageSelectedInstitution||!selectedInstitutionId||!['draft','editing'].includes(remoteProgram?.status);
  $('publishBtn').textContent=editing?'↗ Yeniden Yayınla':'↗ Yayınla';
  $('beginEditBtn').textContent=editing?'✎ Düzenleme Açık':'✎ Düzenle';
- $('versionsBtn').disabled=!isAdmin||!selectedInstitutionId;
+ $('versionsBtn').disabled=!canManageSelectedInstitution||!selectedInstitutionId;
  $('autoBtn').disabled=remoteLoadPending||published;
  $('resetDemo').disabled=remoteLoadPending||published;
  $('shiftConfigBtn').disabled=remoteLoadPending||published;
@@ -1181,7 +1182,7 @@ async function loadRemoteProgram(){
  }
 }
 $('saveBtn').onclick=async()=>{
- if(!isAdmin||!selectedInstitutionId){alert('Aktif kurum ve Ana Yönetici yetkisi gerekli.');return}
+ if(!canManageSelectedInstitution||!selectedInstitutionId){alert('Bu kurum için yönetici yetkisi gerekli.');return}
  if(remoteLoadPending){alert('Sunucu programı yükleniyor. Lütfen bekleyin.');return}
  if(remoteProgram?.status==='published'){alert('Önce Yayını Düzenle butonunu kullanın.');return}
  const button=$('saveBtn');button.disabled=true;
@@ -1207,7 +1208,7 @@ $('saveBtn').onclick=async()=>{
  finally{updateProgramControls()}
 };
 $('publishBtn').onclick=async()=>{
- if(!isAdmin||!selectedInstitutionId){alert('Yayınlamak için Ana Yönetici yetkisi gerekli.');return}
+ if(!canManageSelectedInstitution||!selectedInstitutionId){alert('Bu kurum için yönetici yetkisi gerekli.');return}
  if(remoteLoadPending){alert('Sunucu verisi yükleniyor.');return}
  const editing=remoteProgram?.status==='editing';
  if(!remoteProgram||!['draft','editing'].includes(remoteProgram.status)){alert('Önce Programı Kaydet butonuna basın.');return}
@@ -1235,7 +1236,7 @@ $('publishBtn').onclick=async()=>{
 
 // PAKET 2: Yayin uzerinden duzenleme taslagi acma.
 $('beginEditBtn').onclick=async()=>{
- if(!isAdmin||!selectedInstitutionId){alert('Bu işlem için yönetici yetkisi gerekir.');return}
+ if(!canManageSelectedInstitution||!selectedInstitutionId){alert('Bu kurum için yönetici yetkisi gerekir.');return}
  if(remoteLoadPending){alert('Sunucu programı yükleniyor.');return}
  if(remoteProgram?.status==='editing'){alert('Bu ay icin duzenleme taslagi zaten acik.');return}
  if(remoteProgram?.status!=='published'){alert('Yalnizca yayinlanmis programlar duzenlemeye acilabilir.');return}
@@ -1263,7 +1264,7 @@ function showProgramPayloadPreview(title,payload,onBack){
  if(onBack)$('backToVersions').onclick=onBack;
 }
 $('versionsBtn').onclick=async()=>{
- if(!isAdmin||!selectedInstitutionId){alert('Surum gecmisi icin yonetici yetkisi gerekli.');return}
+ if(!canManageSelectedInstitution||!selectedInstitutionId){alert('Bu kurum için yönetici yetkisi gerekli.');return}
  const inst=selectedInstitutionId,ym=monthKey();
  const {data,error}=await client.from('duty_program_versions').select('version_number,published_at,published_by,payload').eq('institution_id',inst).eq('month_key',ym).order('version_number',{ascending:false});
  if(error){console.error('Surum gecmisi',error);alert('Sürüm geçmişi okunamadı: '+programErrorText(error));return}
