@@ -627,7 +627,7 @@ function validateAssignment(id,key){if(remoteLoadPending)return 'Sunucu program�
  if(limit?.weekly_max!=null&&weekHours+shiftLength(idx,date)>Number(limit.weekly_max))return 'Haftalık azami çalışma saati aşılır.';
  return null;
 }
-function assignToSlot(id,key){const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}draft[key]=id;persistDraft();renderCalendar()}
+async function assignToSlot(id,key){const error=validateAssignment(id,key);if(error){alert('Atama yapılamadı: '+error);return}if(!await confirmFeastFairness(id,key.slice(0,10)))return;const again=validateAssignment(id,key);if(again){alert('Atama yapılamadı: '+again);return}draft[key]=id;persistDraft();renderCalendar()}
 function openShiftConfig(date){if(remoteLoadPending){alert('Sunucu programı yükleniyor.');return}if(remoteProgram?.status==='published'){alert('Yayınlanmış programın vardiya ayarları değiştirilemez.');return}
  const shifts=getShifts(date).map(x=>({...x}));
  modal('Günlük Vardiyalar · '+date,`<p class="sub">Vardiya başlangıcı, bitişi ve gerekli personel sayısını belirleyin. Değişiklikler yalnız bu tarayıcıdaki taslakta saklanır. Personel uygunluk takvimi bu vardiya tanımlarını kullanır.</p><div id="shiftRows"></div><div class="flex"><button class="btn" id="addShiftRow">+ Vardiya Ekle</button><button class="btn primary" id="saveShiftRows">Vardiyaları Kaydet</button></div><div id="shiftConfigMsg" class="notice hidden"></div>`);
@@ -868,6 +868,7 @@ async function loadPublishedSwap(){
      if(!sel.value||!reason.value){alert('Yeni personeli ve değişiklik nedenini seçin.');return}
      const chosen=plannerPeople.find(p=>p.id===sel.value);
      const fullReason=reason.value==='Diğer'&&detail.value.trim()?('Diğer: '+detail.value.trim()):reason.value;
+     if(!await confirmFeastFairness(sel.value,row.date))return;
      if(!confirm(row.date+' '+row.shift.start+'–'+row.shift.end+' nöbeti '+(names.get(row.id)||'eski personel')+' yerine '+(chosen?.name||'yeni personel')+' kişisine aktarılsın mı?\nNeden: '+reason.value+'\nBu işlem yayımlanmış programı günceller ve geçmişe kaydedilir.'))return;
      button.disabled=true;
      try{
@@ -895,7 +896,7 @@ async function loadPublishedSwap(){
 }
 function draftRows(){return Object.entries(draft).map(([key,id])=>{const [date,index,seat]=key.split('|');const shift=getShifts(date)[Number(index)];return shift?{key,date,index:Number(index),seat:Number(seat||0),id,shift,hours:shiftLength(Number(index),date)}:null}).filter(Boolean).sort((a,b)=>a.key.localeCompare(b.key))}
 function renderDraftSwap(){const root=$('swapList');root.replaceChildren();const rows=draftRows();if(!rows.length){root.textContent='Bu ay için taslak nöbet ataması yok. Önce Nöbet Hazırla ekranında atama yapın.';return}
- for(const row of rows){const card=document.createElement('div');card.className='panel';card.style.margin='10px 0';const person=plannerPeople.find(p=>p.id===row.id);const title=document.createElement('strong');title.textContent=row.date+' · '+row.shift.start+'–'+row.shift.end+' · '+(person?.name||'Kayıtlı olmayan personel');const sel=document.createElement('select');sel.style.margin='8px 0';for(const [id,name] of [['','Yeni personel seçin'],...plannerPeople.map(p=>[p.id,p.name])]){const o=document.createElement('option');o.value=id;o.textContent=name;sel.append(o)}const btn=document.createElement('button');btn.className='btn';btn.textContent='Taslak Atamasını Değiştir';btn.onclick=()=>{const id=sel.value;if(!id){alert('Yeni personeli seçin.');return}if(id===row.id){alert('Aynı personel seçildi.');return}const err=validateAssignment(id,row.key);if(err){alert('Değişiklik yapılamadı: '+err);return}if(!confirm('Bu taslak nöbeti seçilen personele aktaralım mı?'))return;draft[row.key]=id;persistDraft();renderDraftSwap()};card.append(title,sel,btn);root.append(card)}
+ for(const row of rows){const card=document.createElement('div');card.className='panel';card.style.margin='10px 0';const person=plannerPeople.find(p=>p.id===row.id);const title=document.createElement('strong');title.textContent=row.date+' · '+row.shift.start+'–'+row.shift.end+' · '+(person?.name||'Kayıtlı olmayan personel');const sel=document.createElement('select');sel.style.margin='8px 0';for(const [id,name] of [['','Yeni personel seçin'],...plannerPeople.map(p=>[p.id,p.name])]){const o=document.createElement('option');o.value=id;o.textContent=name;sel.append(o)}const btn=document.createElement('button');btn.className='btn';btn.textContent='Taslak Atamasını Değiştir';btn.onclick=async()=>{const id=sel.value;if(!id){alert('Yeni personeli seçin.');return}if(id===row.id){alert('Aynı personel seçildi.');return}const err=validateAssignment(id,row.key);if(err){alert('Değişiklik yapılamadı: '+err);return}if(!await confirmFeastFairness(id,row.date))return;if(!confirm('Bu taslak nöbeti seçilen personele aktaralım mı?'))return;draft[row.key]=id;persistDraft();renderDraftSwap()};card.append(title,sel,btn);root.append(card)}
 }
 // Adalet Raporu yalnızca yayınlanmış, salt okunur programı esas alır.
 let publishedFairnessRows=[];
@@ -994,7 +995,7 @@ function openFairnessPerson(person){
  const holidayRows=rows.map(r=>({row:r,special:calendarSpecialDay(r.date)})).filter(x=>x.special&&x.special[1]);
  const holidaySection=section('Resmî tatil ve dinî bayram nöbetleri');
  const holidayInfo=document.createElement('p');holidayInfo.className='sub';
- holidayInfo.textContent='Nöbet başlangıç tarihine göre '+holidayRows.length+' tatil/bayram nöbeti bulundu. Dinî bayram tarihleri yalnız takvimde doğrulanmış 2026 yılı için hesaplanır; diğer yıllar eksik olabilir.';
+ holidayInfo.textContent='Nöbet başlangıç tarihine göre '+holidayRows.length+' tatil/bayram nöbeti bulundu. Dinî bayramlar 2024–2030 arasında tanımlıdır; 2029–2030 tarihleri tahminidir.';
  holidaySection.append(holidayInfo);
  if(holidayRows.length){const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse';const head=document.createElement('tr');for(const title of ['Tarih','Tatil / bayram günü','Vardiya','Saat']){const th=document.createElement('th');th.textContent=title;th.style.cssText='padding:8px;text-align:left;border-bottom:1px solid #587087';head.append(th)}table.append(head);
  for(const item of holidayRows){const tr=document.createElement('tr');for(const value of [item.row.date,item.special[0],(item.row.shift?.start||'—')+' – '+(item.row.shift?.end||'—'),format(item.row.hours)]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}table.append(tr)}const scroll=document.createElement('div');scroll.style.overflowX='auto';scroll.append(table);holidaySection.append(scroll)}
@@ -1448,11 +1449,37 @@ $('printProgram').onclick=async()=>{
 // Kalıcı program işlemleri Supabase SQL kurulumuna bağlıdır.
 await restoreSession();
 
-// Sabit tarihli tatiller; dini bayramlar resmi takvimden dogrulanan yillarla sinirlidir.
+// Resmi tatil takvimi: 2024–2028 tarihleri Diyanet/DHMI; 2029–2030 ileri tarih tahmini.
+// Yalniz resmi tatiller ve dini bayram gunleri renklendirilir; arefe ayri renkte degildir.
+const RELIGIOUS_FEAST_STARTS={
+ 2024:['2024-04-10','2024-06-16'],2025:['2025-03-30','2025-06-06'],
+ 2026:['2026-03-20','2026-05-27'],2027:['2027-03-09','2027-05-16'],
+ 2028:['2028-02-26','2028-05-05'],2029:['2029-02-14','2029-04-24'],
+ 2030:['2030-02-04','2030-04-13']
+};
+const RELIGIOUS_DAYS=(()=>{const map={};for(const [year,starts] of Object.entries(RELIGIOUS_FEAST_STARTS)){
+ starts.forEach((first,index)=>{const name=index?'Kurban Bayramı':'Ramazan Bayramı',count=index?4:3;
+  for(let i=0;i<count;i++){const d=new Date(first+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);map[d.toISOString().slice(0,10)]=[name+' · '+(i+1)+'. Gün',true,{name,day:i+1,year:Number(year)}]}
+ });}return map})();
+function religiousFeastInfo(date){return RELIGIOUS_DAYS[date]?.[2]||null}
 function calendarSpecialDay(date){
  const fixed={'01-01':['Yılbaşı',true],'04-23':['Ulusal Egemenlik ve Çocuk Bayramı',true],'05-01':['Emek ve Dayanışma Günü',true],'05-19':['Atatürk’ü Anma, Gençlik ve Spor Bayramı',true],'07-15':['Demokrasi ve Millî Birlik Günü',true],'08-30':['Zafer Bayramı',true],'10-29':['Cumhuriyet Bayramı',true],'11-10':['Atatürk’ü Anma Günü',false],'11-24':['Öğretmenler Günü',false]};
- const religious={'2026-03-20':['Ramazan Bayramı · 1. Gün',true],'2026-03-21':['Ramazan Bayramı · 2. Gün',true],'2026-03-22':['Ramazan Bayramı · 3. Gün',true],'2026-05-27':['Kurban Bayramı · 1. Gün',true],'2026-05-28':['Kurban Bayramı · 2. Gün',true],'2026-05-29':['Kurban Bayramı · 3. Gün',true],'2026-05-30':['Kurban Bayramı · 4. Gün',true]};
- return religious[date]||fixed[date.slice(5)]||null;
+ return RELIGIOUS_DAYS[date]||fixed[date.slice(5)]||null;
+}
+// Bayram adaleti: yalniz onceki yillarin yayinlanmis nobetleri; uyari, engel degil.
+async function priorFeastDutyWarning(personId,date){
+ const feast=religiousFeastInfo(date);
+ if(!feast||!client||!selectedInstitutionId)return '';
+ const {data,error}=await client.from('duty_programs').select('month_key,payload').eq('institution_id',selectedInstitutionId).eq('status','published').lt('month_key',date.slice(0,7)).order('month_key',{ascending:false}).limit(500);
+ if(error)throw error;
+ if((data||[]).length===500)throw Error('Bayram geçmişi sorgusu sınırına ulaştı; eksiksiz kontrol yapılamadı.');
+ const matches=(data||[]).flatMap(p=>pdfRowsFromPayload(p.payload)).filter(r=>r.id===personId&&r.date<date).filter(r=>{const old=religiousFeastInfo(r.date);return old&&old.name===feast.name&&old.day===feast.day});
+ if(!matches.length)return '';
+ return '⚠️ BAYRAM ADALETİ UYARISI\n'+feast.name+' '+feast.day+'. gün nöbeti bu personele daha önce '+matches.length+' kez verilmiş:\n'+matches.map(r=>r.date).join(', ')+'\n\nAtama yine yapılabilir. Devam edilsin mi?';
+}
+async function confirmFeastFairness(personId,date){
+ try{const warning=await priorFeastDutyWarning(personId,date);return !warning||confirm(warning)}
+ catch(e){alert('Bayram geçmişi kontrol edilemedi: '+(e?.message||e)+'\nİşlem güvenlik amacıyla durduruldu.');return false}
 }
 // Mevcut personel takvimindeki ayni veritabanini kullanir; degisiklikleri kaydet butonuna kadar yerelde tutar.
 let quickOffPerson='',quickOffMonth=new Date(),quickOffOriginal=new Set(),quickOffEdited=new Set();
