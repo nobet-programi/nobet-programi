@@ -241,7 +241,7 @@ async function loadManagerCenter(){
  }else{
   status.textContent=(orgs||[]).length+' erişilebilir kurum.';
  }
- for(const o of orgs||[]){list.append(centerCard(o.name,o.is_active?'Kurum aktif · Personeller ve nöbetler':'Kurum pasif',()=>{selectCenterInstitution(o);navigate('home'}))}
+ for(const o of orgs||[]){list.append(centerCard(o.name,o.is_active?'Kurum aktif · Personeller ve nöbetler':'Kurum pasif',()=>{selectCenterInstitution(o);navigate('home')}))}
  }catch(e){console.error('Kurum paneli',e);status.textContent='Kurumlar okunamadı. Yetki ve bağlantıyı kontrol edin.'}
 }
 async function openManagerLanding(){
