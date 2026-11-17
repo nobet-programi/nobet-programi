@@ -146,7 +146,7 @@ body.light:has(#loginView:not(.hidden)){
 </div>
 <div class="planner"><aside class="panel"><h3 style="margin-top:0">Personel Havuzu</h3><p class="sub">Kartın tamamından sürükle. Tıklarsan detay açılır.</p><div class="people" id="peoplePool"></div><div id="plannerHours" class="statusline"></div><div id="plannerPeopleMsg" class="statusline" role="status"></div></aside><div class="panel calendar-scroll"><div class="weeknames"><span>Pazartesi</span><span>Salı</span><span>Çarşamba</span><span>Perşembe</span><span>Cuma</span><span>Cumartesi</span><span>Pazar</span></div><div id="calendar" class="cal"></div><div class="month-edge" id="calendarNextMonth"><button class="btn" id="scrollNextMonth">Sonraki Ayı Aç ↓</button></div></div></div></div>
 <div id="swapPage" class="hidden panel"><h2>Nöbet Değiştir</h2><p class="sub">Yayımlanmış nöbetlerde acil izin, rapor veya mazeret nedeniyle personel değiştirilebilir. Her değişiklik neden ve önceki atama bilgisiyle kaydedilir. Geçici taslak işlemleri korunur.</p><div id="publishedSwapList"></div><h3>Geçici Taslak Atamaları</h3><div id="swapContext" class="statusline"></div><div id="swapList"></div></div>
-<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçilen kurumun yayınlanmış programlarını hesaplar. Resmî tatil sınıflandırması henüz dahil değildir.</p><div class="flex" style="margin:12px 0;align-items:end;gap:10px;flex-wrap:wrap">
+<div id="fairnessPage" class="hidden panel"><div class="section-head"><h2>Adalet Raporu · Yayınlanmış Program</h2><button class="btn" id="fairnessCsv">Raporu CSV İndir</button></div><p class="sub">Bu rapor yalnızca seçilen kurumun yayınlanmış programlarını hesaplar. Tatil saatleri adalet raporunda vardiya saatlerine göre ayrıca hesaplanır.</p><div class="flex" style="margin:12px 0;align-items:end;gap:10px;flex-wrap:wrap">
 <label>Dönem <select id="fairnessPeriod"><option value="month">Seçili ay</option><option value="3">Son 3 ay</option><option value="12">Son 12 ay</option><option value="all">Tüm yayınlanmış geçmiş</option><option value="custom">Özel tarih aralığı</option></select></label>
 <label>Başlangıç <input type="date" id="fairnessFrom" disabled></label>
 <label>Bitiş <input type="date" id="fairnessTo" disabled></label>
@@ -915,6 +915,41 @@ function nightHoursForShift(row){
  }
  return total/60;
 }
+
+// TATİL SAATİ RAPORU: Salt okunur. Atama, yayımlama ve personel uygunluğu akışlarını değiştirmez.
+// 28 Ekim ve dinî bayram arifelerinde tatil 13:00'te başlar; diğer resmî tatiller tam gündür.
+function holidayIntervalsForDate(date){
+ const day=calendarSpecialDay(date);
+ const monthDay=date.slice(5);
+ const eveStarts=Object.values(RELIGIOUS_FEAST_STARTS).flat().map(first=>{
+  const d=new Date(first+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-1);
+  return d.toISOString().slice(0,10);
+ });
+ if(monthDay==='10-28'||eveStarts.includes(date))
+  return [{start:13*60,end:24*60,name:monthDay==='10-28'?'Cumhuriyet Bayramı arifesi':'Dinî bayram arifesi',partial:true}];
+ if(day&&day[1])return [{start:0,end:24*60,name:day[0],partial:false}];
+ return [];
+}
+function holidayHoursForShift(row){
+ const parse=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?Number(m[1])*60+Number(m[2]):NaN};
+ const start=parse(row.shift?.start),end=parse(row.shift?.end);
+ if(!Number.isFinite(start)||!Number.isFinite(end))return {total:0,full:0,half:0,parts:[]};
+ const finish=end<=start?end+1440:end;
+ const base=new Date(row.date+'T00:00:00Z');
+ const parts=[];let full=0,half=0;
+ for(let offset=0;offset<=Math.ceil(finish/1440);offset++){
+  const d=new Date(base);d.setUTCDate(d.getUTCDate()+offset);
+  const date=d.toISOString().slice(0,10);
+  for(const period of holidayIntervalsForDate(date)){
+   const overlap=Math.max(0,Math.min(finish,offset*1440+period.end)-Math.max(start,offset*1440+period.start));
+   if(!overlap)continue;
+   const hours=overlap/60;
+   if(period.partial)half+=hours;else full+=hours;
+   parts.push({date,name:period.name,hours,partial:period.partial});
+  }
+ }
+ return {total:full+half,full,half,parts};
+}
 function fairnessData(){
  const byId=new Map(plannerPeople.map(p=>[p.id,{id:p.id,name:p.name,count:0,hours:0,night:0,nightHours:0,saturday:0,sunday:0,days:[0,0,0,0,0,0,0]}]));
  for(const row of publishedFairnessRows){
@@ -992,14 +1027,15 @@ function openFairnessPerson(person){
  const monthly=section('Aylık nöbet geçmişi');const months=new Map();for(const r of rows){const key=r.date.slice(0,7),v=months.get(key)||{count:0,hours:0,night:0};v.count++;v.hours+=r.hours;v.night+=nightHoursForShift(r);months.set(key,v)}
  const monthTable=document.createElement('table');monthTable.style.cssText='width:100%;border-collapse:collapse';const monthHead=document.createElement('tr');for(const label of ['Ay','Nöbet','Toplam saat','Gece saati']){const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:8px;border-bottom:1px solid #587087';monthHead.append(th)}monthTable.append(monthHead);for(const [key,v] of [...months].sort((a,b)=>a[0].localeCompare(b[0]))){const tr=document.createElement('tr');for(const val of [key,v.count,format(v.hours),format(v.night)]){const td=document.createElement('td');td.textContent=String(val);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}monthTable.append(tr)}monthly.append(monthTable);
  const detail=section('Tarih ve vardiya ayrıntıları');const wrap=document.createElement('div');wrap.style.overflowX='auto';const tbl=document.createElement('table');tbl.style.cssText='width:100%;min-width:540px;border-collapse:collapse';const header=document.createElement('tr');for(const label of ['Tarih','Gün','Vardiya','Toplam saat','Gece saati']){const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:8px;border-bottom:1px solid #587087';header.append(th)}tbl.append(header);for(const r of rows){const date=new Date(r.date+'T12:00:00'),index=(date.getDay()+6)%7;const tr=document.createElement('tr');for(const value of [r.date,names[index],(r.shift?.start||'—')+' – '+(r.shift?.end||'—'),format(r.hours),format(nightHoursForShift(r))]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}tbl.append(tr)}wrap.append(tbl);detail.append(wrap);
- const holidayRows=rows.map(r=>({row:r,special:calendarSpecialDay(r.date)})).filter(x=>x.special&&x.special[1]);
- const holidaySection=section('Resmî tatil ve dinî bayram nöbetleri');
+ const holidayRows=rows.map(r=>({row:r,calc:holidayHoursForShift(r)})).filter(x=>x.calc.total>0);
+ const holidaySection=section('Resmî tatil ve dinî bayram saatleri');
+ const sumHoliday=holidayRows.reduce((a,x)=>a+x.calc.total,0),sumHalf=holidayRows.reduce((a,x)=>a+x.calc.half,0);
  const holidayInfo=document.createElement('p');holidayInfo.className='sub';
- holidayInfo.textContent='Nöbet başlangıç tarihine göre '+holidayRows.length+' tatil/bayram nöbeti bulundu. Dinî bayramlar 2024–2030 arasında tanımlıdır; 2029–2030 tarihleri tahminidir.';
+ holidayInfo.textContent='Toplam '+format(sumHoliday)+' tatil saati ('+format(sumHalf)+' saat yarım gün tatili dahil). Gece yarısını aşan vardiyalar her takvim gününe ayrı dağıtılır.';
  holidaySection.append(holidayInfo);
- if(holidayRows.length){const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse';const head=document.createElement('tr');for(const title of ['Tarih','Tatil / bayram günü','Vardiya','Saat']){const th=document.createElement('th');th.textContent=title;th.style.cssText='padding:8px;text-align:left;border-bottom:1px solid #587087';head.append(th)}table.append(head);
- for(const item of holidayRows){const tr=document.createElement('tr');for(const value of [item.row.date,item.special[0],(item.row.shift?.start||'—')+' – '+(item.row.shift?.end||'—'),format(item.row.hours)]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}table.append(tr)}const scroll=document.createElement('div');scroll.style.overflowX='auto';scroll.append(table);holidaySection.append(scroll)}
- const note=document.createElement('p');note.className='sub';note.textContent='Bu analiz yalnızca seçilen dönemin yayınlanmış nöbetlerini içerir. Tatil sayımı nöbetin başladığı güne göredir; gece yarısını aşan vardiyaların tatil saatleri ayrıca ayrıştırılmaz.';root.append(note);
+ if(holidayRows.length){const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse';const head=document.createElement('tr');for(const title of ['Vardiya tarihi','Vardiya','Tatil kapsamı','Tatil saati']){const th=document.createElement('th');th.textContent=title;th.style.cssText='padding:8px;text-align:left;border-bottom:1px solid #587087';head.append(th)}table.append(head);
+ for(const item of holidayRows){const tr=document.createElement('tr');for(const value of [item.row.date,(item.row.shift?.start||'—')+' – '+(item.row.shift?.end||'—'),item.calc.parts.map(p=>p.date+' '+p.name).join(' / '),format(item.calc.total)]){const td=document.createElement('td');td.textContent=String(value);td.style.cssText='padding:8px;border-bottom:1px solid #334b64';tr.append(td)}table.append(tr)}const scroll=document.createElement('div');scroll.style.overflowX='auto';scroll.append(table);holidaySection.append(scroll)}
+ const note=document.createElement('p');note.className='sub';note.textContent='Hesaplama, yalnızca seçilen dönemin yayımlanmış nöbetlerine uygulanır. 28 Ekim ve dinî bayram arifelerinde 13.00 sonrası tatil kabul edilir. 2029–2030 dinî bayram tarihleri resmî takvimle teyit edilmelidir.';root.append(note);
  fairnessPersonOverlay.classList.remove('hidden');fairnessPersonOverlay.style.display='flex';$('fairnessPersonClose').focus();
 }
 
@@ -1024,6 +1060,11 @@ function renderPublishedFairness(){
  const staffPanel=makePanel('Personel nöbet sayıları');for(const x of active)barLine(staffPanel,x.name,x.count,Math.max(1,...active.map(p=>p.count)),'#60a5fa');
  const monthly=new Map();for(const row of publishedFairnessRows){const key=row.date.slice(0,7);const val=monthly.get(key)||{count:0,hours:0};val.count++;val.hours+=row.hours;monthly.set(key,val)}
  const monthlyPanel=makePanel('Aylık nöbet eğilimi');for(const [key,val] of [...monthly.entries()].sort((a,b)=>a[0].localeCompare(b[0])))barLine(monthlyPanel,key,val.count,Math.max(1,...[...monthly.values()].map(v=>v.count)),'#a78bfa',' nöbet');
+ const holidayTotals=new Map();
+ for(const row of publishedFairnessRows){const h=holidayHoursForShift(row);const v=holidayTotals.get(row.id)||{hours:0,half:0};v.hours+=h.total;v.half+=h.half;holidayTotals.set(row.id,v)}
+ const holidayPanel=makePanel('Resmî tatil / bayram saatleri');
+ const holidayMaximum=Math.max(1,...[...holidayTotals.values()].map(x=>x.hours));
+ for(const x of active){const h=holidayTotals.get(x.id)||{hours:0,half:0};barLine(holidayPanel,x.name,h.hours,holidayMaximum,'#f59e0b',' saat');if(h.half>0){const small=document.createElement('small');small.textContent='Yarım gün tatilinden: '+fmt(h.half)+' saat';holidayPanel.append(small)}}
  root.append(dashboard);
  // TEST 46: Yalnızca yayınlanmış verilerden, açıklanabilir personeller arası karşılaştırma.
  const compare=document.createElement('section');compare.style.cssText='margin:18px 0 24px;padding:17px;border:1px solid #587087;border-radius:12px';
@@ -1042,14 +1083,14 @@ function renderPublishedFairness(){
  }
  root.append(compare);
  const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;min-width:1050px';
- const labels=['Personel','Toplam nöbet','Toplam saat','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+ const labels=['Personel','Toplam nöbet','Toplam saat','Tatil saati','Yarım gün tatil saati','Gece nöbeti','Gece saati (22–06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
  const head=document.createElement('tr');labels.forEach(label=>{const th=document.createElement('th');th.textContent=label;th.style.cssText='text-align:left;padding:10px;border-bottom:1px solid #74879a';head.append(th)});tbl.append(head);
- for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});if(x.count>0){const nameCell=tr.firstElementChild;nameCell.style.cssText+=';cursor:pointer;color:#93c5fd;text-decoration:underline;text-underline-offset:3px';nameCell.title='Ayrıntılı analizi aç';nameCell.tabIndex=0;nameCell.setAttribute('role','button');nameCell.onclick=()=>openFairnessPerson(x);nameCell.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFairnessPerson(x)}}}tbl.append(tr)}root.append(tbl);
- const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Resmî tatil sınıflandırması bu aşamada dahil değildir.';root.append(note);
+ for(const x of data){const tr=document.createElement('tr');[x.name,x.count,Number(x.hours.toFixed(2)).toLocaleString('tr-TR'),fmt((holidayTotals.get(x.id)||{hours:0}).hours),fmt((holidayTotals.get(x.id)||{half:0}).half),x.night,Number(x.nightHours.toFixed(2)).toLocaleString('tr-TR'),...x.days].forEach(v=>{const td=document.createElement('td');td.textContent=String(v);td.style.cssText='padding:10px;border-bottom:1px solid #74879a';tr.append(td)});if(x.count>0){const nameCell=tr.firstElementChild;nameCell.style.cssText+=';cursor:pointer;color:#93c5fd;text-decoration:underline;text-underline-offset:3px';nameCell.title='Ayrıntılı analizi aç';nameCell.tabIndex=0;nameCell.setAttribute('role','button');nameCell.onclick=()=>openFairnessPerson(x);nameCell.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFairnessPerson(x)}}}tbl.append(tr)}root.append(tbl);
+ const note=document.createElement('p');note.className='sub';note.textContent='Gece saatleri 22.00–06.00 aralığından hesaplanır. Vardiya gece yarısını aşıyorsa saatler ayrıştırılır. Tatil saatleri gün sınırları ve yarım gün başlangıcı dikkate alınarak ayrıca hesaplanır.';root.append(note);
 }
 $('fairnessCsv').onclick=()=>{
  if(!publishedFairnessRows.length){alert('İndirilecek yayınlanmış nöbet verisi bulunamadı.');return}
- const rows=[['Personel','Toplam Nöbet','Toplam Saat','Gece Nöbeti','Gece Saati (22-06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours.toFixed(2),x.night,x.nightHours.toFixed(2),...x.days])];
+ const rows=[['Personel','Toplam Nöbet','Toplam Saat','Tatil Saati','Yarım Gün Tatil Saati','Gece Nöbeti','Gece Saati (22-06)','Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],...fairnessData().map(x=>[x.name,x.count,x.hours.toFixed(2),publishedFairnessRows.filter(r=>r.id===x.id).reduce((a,r)=>a+holidayHoursForShift(r).total,0).toFixed(2),publishedFairnessRows.filter(r=>r.id===x.id).reduce((a,r)=>a+holidayHoursForShift(r).half,0).toFixed(2),x.night,x.nightHours.toFixed(2),...x.days])];
  const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const u=globalThis.URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='yayinlanmis-adalet-'+$('fairnessPeriod').value+'-'+monthKey()+'.csv';a.click();setTimeout(()=>globalThis.URL.revokeObjectURL(u),1000)
 };
